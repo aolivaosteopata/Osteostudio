@@ -1,7 +1,7 @@
 /* OsteoStudio – service worker per l'uso offline.
    Memorizza solo i file dell'app (pagina, icone, manifest): i dati dei pazienti
    restano nel database locale dell'iPad e non passano mai di qui. */
-const CACHE = 'osteostudio-v2.0.0';
+const CACHE = 'osteostudio-v2.1.0';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {

@@ -250,7 +250,7 @@ input::placeholder,textarea::placeholder{color:var(--faint)}
 
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin:22px 0 20px;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
-.tab{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 16px;border:0;background:transparent;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tab{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 12px;border:0;background:transparent;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
 .tab.on{color:var(--accent-strong);border-bottom-color:var(--accent)}
 .tab .count{font-size:12px;background:var(--surface-3);border-radius:99px;padding:1px 8px;color:var(--muted)}
 
@@ -426,6 +426,9 @@ input::placeholder,textarea::placeholder{color:var(--faint)}
 .pm-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .pm-size{display:inline-flex;align-items:center;gap:10px;padding:0 12px;min-height:44px;border-radius:12px;background:var(--surface-3)}
 .pm-size input[type=range]{width:150px;accent-color:var(--accent)}
+.pm-lbl{font-size:14px;font-weight:600;color:var(--muted)}
+.pm-brushes button span{white-space:nowrap}
+#pmStroke{pointer-events:none}
 .pm-size output{min-width:22px;text-align:right;font-variant-numeric:tabular-nums;font-size:14px;color:var(--muted)}
 .size-dot-box{width:30px;height:30px;display:flex;align-items:center;justify-content:center}
 .size-dot{display:block;border-radius:50%;background:var(--text)}
@@ -453,6 +456,20 @@ input::placeholder,textarea::placeholder{color:var(--faint)}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{min-height:40px;padding:0 14px;border-radius:99px;border:1px solid var(--border-strong);background:var(--surface);font-size:14px;font-weight:500;color:var(--text)}
 .chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-text)}
+.chip.add{display:inline-flex;align-items:center;gap:4px;border-style:dashed;color:var(--accent);background:transparent}
+.tech-group.primary{border-color:var(--accent);background:var(--accent-soft);margin-bottom:14px}
+.tech-group.primary h3{font-size:17px}
+.tech-group.primary .chip{min-height:44px;font-size:15px}
+.tech-more{border:1px solid var(--border);border-radius:var(--r);background:var(--surface-2)}
+.tech-more > summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;padding:14px 16px;font-weight:600;color:var(--muted)}
+.tech-more > summary::-webkit-details-marker{display:none}
+.tech-more > summary::before{content:'';width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .2s}
+.tech-more[open] > summary::before{transform:rotate(45deg)}
+.tech-more > summary .count{font-size:12px;font-weight:700;border-radius:99px;padding:1px 9px;background:var(--accent);color:var(--accent-text)}
+.tech-more > .tech-grid{padding:0 14px 14px}
+.custom-tech{display:flex;flex-direction:column;gap:12px}
+.custom-tech .chips{display:flex;flex-wrap:wrap;gap:8px}
+.custom-tech .chip{display:inline-flex;align-items:center;gap:6px}
 .linked{display:inline-flex;align-items:center;gap:6px}
 
 /* ==========================================================================
@@ -532,6 +549,30 @@ input::placeholder,textarea::placeholder{color:var(--faint)}
 /* Copertura dell'anteprima nel multitasking */
 html.privacy #app, html.privacy #modal-root, html.privacy #toast-root{visibility:hidden !important}
 html.privacy body{background:var(--bg)}
+
+/* ==========================================================================
+   PAGAMENTI
+   ========================================================================== */
+.pay-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;align-items:end}
+.pay-seg{display:flex;width:100%}
+.pay-seg button{flex:1;justify-content:center;white-space:nowrap;padding:0 8px}
+.seg button.on.ps-da_saldare{color:var(--warn)}
+.seg button.on.ps-saldata{color:var(--ok)}
+.pay-note{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 0;padding:10px 12px;border-radius:var(--r-sm);background:var(--warn-soft);color:var(--warn);font-size:14px}
+.pay-note .btn{margin-left:auto}
+.pay-stats{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.pay-stats .stat{padding:14px}
+.pay-stats .stat strong{font-size:22px}
+.pay-list,.pay-history{list-style:none;margin:0;padding:0}
+.pay-list li{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border)}
+.pay-list li:last-child,.pay-history li:last-child{border-bottom:0}
+.pay-row{display:flex;align-items:center;gap:14px;flex:1;padding:12px 4px;cursor:pointer}
+.pay-row input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent);flex:none}
+.pay-row .grow,.pay-history .grow{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.pay-row small,.pay-history small{color:var(--muted);font-size:13px}
+.amt{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pay-history li{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border)}
+.s-top .s-pills{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -575,6 +616,12 @@ const PAIN_COLORS = Object.freeze([
 ]);
 
 const TECHNIQUES = Object.freeze({
+  biodinamica: {
+    label: 'Biodinamica',
+    primary: true,
+    items: ['Stato di neutro', 'Quiete dinamica', 'Marea lunga', 'Marea fluida', 'Corpo fluido',
+            'Linea mediana', 'Fulcri', 'Potency', 'Ignizione']
+  },
   strutturali: {
     label: 'Strutturali',
     items: ['HVLA / Thrust', 'Muscle Energy (MET)', 'Tecniche articolatorie', 'Strain-Counterstrain', 'Trazioni e decoaptazioni', 'Inibizione muscolare']
@@ -600,6 +647,21 @@ const APPT_STATUS = Object.freeze({
 });
 
 const APPT_TYPES = Object.freeze(['Prima visita', 'Trattamento', 'Controllo', 'Follow-up telefonico']);
+
+const PAY_STATUS = Object.freeze({
+  da_saldare: { label: 'Da saldare', cls: 'warn' },
+  saldata:    { label: 'Saldata',    cls: 'ok' },
+  gratuita:   { label: 'Gratuita',   cls: 'neutral' }
+});
+const PAY_METHODS = Object.freeze(['Contanti', 'Carta / POS', 'Bonifico', 'Satispay', 'Altro']);
+
+const BRUSHES = Object.freeze([
+  { id: 'pen',    label: 'Penna',      icon: 'pen' },
+  { id: 'marker', label: 'Pennarello', icon: 'marker' },
+  { id: 'pencil', label: 'Matita',     icon: 'pencil' },
+  { id: 'spray',  label: 'Aerografo',  icon: 'spray' },
+  { id: 'dots',   label: 'Puntini',    icon: 'dots' }
+]);
 
 const CONSENTS = Object.freeze({
   informato: { label: 'Consenso informato al trattamento', short: 'Consenso informato' },
@@ -641,6 +703,10 @@ const DEFAULT_SETTINGS = Object.freeze({
   onlyPencil: true,
   pressure: true,
   brushSize: 12,
+  brush: 'pen',
+  brushOpacity: 0.5,
+  defaultFee: null,
+  customTechniques: {},
   lastBackupAt: null
 });
 
@@ -648,6 +714,12 @@ const DEFAULT_SETTINGS = Object.freeze({
    2. ICONE SVG INCORPORATE
    ========================================================================== */
 const ICONS = Object.freeze({
+  marker: '<path d="m14.5 4.5 5 5-8.5 8.5H6v-5z"/><path d="M4 21h9"/><path d="m12 7 5 5"/>',
+  pencil: '<path d="M4 20l1.3-4.4L16 4.9a2.1 2.1 0 0 1 3 3L8.4 18.7z"/><path d="m14 7 3 3"/>',
+  spray: '<rect x="5" y="10" width="8" height="11" rx="2"/><path d="M7 10V7h4v3"/><circle cx="16.5" cy="6" r=".7"/><circle cx="19.5" cy="8.5" r=".7"/><circle cx="17" cy="10.5" r=".7"/><circle cx="20" cy="4" r=".7"/><circle cx="16" cy="3" r=".7"/>',
+  dots: '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="8.5" cy="6.5" r="1.5"/><circle cx="15.5" cy="17.5" r="1.5"/>',
+  euro: '<path d="M17.5 6.2A7 7 0 1 0 17.5 17.8"/><path d="M3.5 10h10M3.5 14h10"/>',
+  opacity: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17"/><path d="M12 7h5M12 11h7M12 15h6"/>',
   home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/>',
   calendar: '<rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>',
   users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-6 6.5-6s5.9 2.4 6.5 6"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.4c1.6.9 2.7 2.8 3 5.6"/>',
@@ -1256,7 +1328,7 @@ const S = {
   pdfTarget: null,
   exportReady: null,
   pendingImport: null,
-  pm: { color: PAIN_COLORS[0].color, tool: 'pen', size: DEFAULT_SETTINGS.brushSize }
+  pm: { color: PAIN_COLORS[0].color, tool: 'pen', size: DEFAULT_SETTINGS.brushSize, brush: 'pen', opacity: DEFAULT_SETTINGS.brushOpacity }
 };
 
 function emptyAnamnesi() { return ANAMNESI_FIELDS.reduce((o, f) => { o[f.k] = ''; return o; }, {}); }
@@ -1277,11 +1349,15 @@ function normalizePatient(p) {
 function normalizeSession(s) {
   const tech = emptyTechniques();
   Object.keys(tech).forEach((k) => { if (Array.isArray(s.tecniche?.[k])) tech[k] = s.tecniche[k].slice(); });
+  const fee = s.importo === '' || s.importo === null || s.importo === undefined ? null : Number(s.importo);
   return {
     date: todayISO(), sintomo: '', vas: null, palpatoria: '', test: '', tecnicheNote: '',
     esito: '', indicazioni: '', painMap: '', appointmentId: null,
+    pagamento: 'da_saldare', pagatoIl: '', metodo: '', ricevuta: '',
     ...s,
     vas: Number.isFinite(s.vas) ? s.vas : null,
+    importo: Number.isFinite(fee) && fee >= 0 ? fee : null,
+    pagamento: PAY_STATUS[s.pagamento] ? s.pagamento : 'da_saldare',
     tecniche: tech,
     createdAt: s.createdAt || nowISO(),
     updatedAt: s.updatedAt || nowISO()
@@ -1309,6 +1385,9 @@ async function loadAll() {
   S.appointments = new Map(appointments.map((a) => [a.id, normalizeAppointment(a)]));
   S.settings = { ...DEFAULT_SETTINGS, ...(settingsRec?.value || {}) };
   S.pm.size = Number(S.settings.brushSize) || DEFAULT_SETTINGS.brushSize;
+  S.pm.brush = BRUSHES.some((b) => b.id === S.settings.brush) ? S.settings.brush : 'pen';
+  const op = Number(S.settings.brushOpacity);
+  S.pm.opacity = Number.isFinite(op) && op >= 0.1 && op <= 1 ? op : DEFAULT_SETTINGS.brushOpacity;
 }
 
 function saveSettings() { return DB.put('settings', { key: 'app', value: { ...S.settings } }); }
@@ -1317,6 +1396,21 @@ function sortedPatients() {
   return [...S.patients.values()].sort((a, b) =>
     (a.cognome || '').localeCompare(b.cognome || '', 'it', { sensitivity: 'base' }) ||
     (a.nome || '').localeCompare(b.nome || '', 'it', { sensitivity: 'base' }));
+}
+
+function fmtEUR(n) {
+  return Number.isFinite(n) ? new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n) : '–';
+}
+function parseAmount(v) {
+  const t = String(v ?? '').replace(/[€\s]/g, '').replace(',', '.');
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
+}
+function sumFees(list) { return list.reduce((t, s) => t + (Number.isFinite(s.importo) ? s.importo : 0), 0); }
+function unpaidOf(patientId) {
+  return [...S.sessions.values()].filter((s) => s.patientId === patientId && s.pagamento === 'da_saldare')
+    .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 }
 
 function sessionsOf(patientId, dir = 'desc') {
@@ -1716,6 +1810,11 @@ function viewDashboard() {
   const recent = [...S.sessions.values()]
     .sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.updatedAt || '').localeCompare(a.updatedAt || ''))
     .slice(0, 5);
+  const debtors = [...S.patients.values()]
+    .map((p) => ({ p, list: unpaidOf(p.id) }))
+    .filter((x) => x.list.length)
+    .sort((a, b) => sumFees(b.list) - sumFees(a.list) || b.list.length - a.list.length);
+  const totalDue = debtors.reduce((t, x) => t + sumFees(x.list), 0);
   const h = now.getHours();
   const greet = h < 13 ? 'Buongiorno' : h < 18 ? 'Buon pomeriggio' : 'Buonasera';
   const who = S.settings.therapistName ? `, ${S.settings.therapistName}` : '';
@@ -1755,6 +1854,12 @@ function viewDashboard() {
           const badge = Number.isFinite(s.vas) ? `<span class="vas-badge" style="--c:${vasColor(s.vas)}">VAS ${s.vas}</span>` : '<span class="vas-badge none">VAS –</span>';
           return `<li><button class="mini-row" data-action="open-session" data-id="${esc(s.id)}"><span class="avatar">${esc(initials(p))}</span><span class="grow"><strong>${esc(fullName(p))}</strong><small>${esc(fmtDate(s.date, 'medium'))}${s.sintomo ? ' – ' + esc(s.sintomo) : ''}</small></span>${badge}</button></li>`;
         }).join('')}</ul>` : emptyState('Nessuna seduta registrata', 'Apri la scheda di un paziente e tocca “Nuova seduta”.', 'clipboard')}
+      </section>
+      <section class="card">
+        <div class="card-head"><h2>Da incassare</h2><span class="muted sm">${debtors.length ? esc(fmtEUR(totalDue)) : ''}</span></div>
+        ${debtors.length ? `<ul class="mini-list">${debtors.slice(0, 8).map(({ p, list }) =>
+          `<li><button class="mini-row" data-action="open-payments" data-id="${esc(p.id)}"><span class="avatar">${esc(initials(p))}</span><span class="grow"><strong>${esc(fullName(p))}</strong><small>${plural(list.length, 'seduta', 'sedute')} da saldare, dal ${esc(fmtDate(list[0].date, 'dm'))}</small></span><span class="pill warn">${esc(fmtEUR(sumFees(list)))}</span></button></li>`).join('')}</ul>`
+          : emptyState('Tutto saldato', 'Nessuna seduta in attesa di pagamento.', 'check')}
       </section>
     </div>
   </div>`;
@@ -1877,12 +1982,14 @@ function patientDetailHTML(p) {
     ['anagrafica', 'Anagrafica', ''],
     ['anamnesi', 'Anamnesi', ''],
     ['consensi', 'Consensi', `${nConsents}/2`],
-    ['diario', 'Diario clinico', String(sessions.length)]
+    ['diario', 'Diario', String(sessions.length)],
+    ['pagamenti', 'Pagamenti', unpaidOf(p.id).length ? String(unpaidOf(p.id).length) : '']
   ];
   let body = '';
   if (S.patientTab === 'anamnesi') body = tabAnamnesi(p);
   else if (S.patientTab === 'consensi') body = tabConsensi(p);
   else if (S.patientTab === 'diario') body = tabDiario(p, sessions);
+  else if (S.patientTab === 'pagamenti') body = tabPagamenti(p);
   else body = tabAnagrafica(p);
 
   return `<div class="detail">
@@ -1970,7 +2077,7 @@ function sessionCardHTML(s, number) {
   return `<button class="s-card" data-action="open-session" data-id="${esc(s.id)}">
     <canvas data-thumb="${esc(s.id)}" width="480" height="300" aria-hidden="true"></canvas>
     <span class="s-body">
-      <span class="s-top"><strong>Seduta ${number}, ${esc(fmtDate(s.date, 'medium'))}</strong>${badge}</span>
+      <span class="s-top"><strong>Seduta ${number}, ${esc(fmtDate(s.date, 'medium'))}</strong><span class="s-pills">${payPill(s)}${badge}</span></span>
       <span class="s-sym">${s.sintomo ? esc(s.sintomo) : 'Sintomo principale non indicato'}</span>
       ${tech.length ? `<span class="s-tags">${tech.map((k) => `<span class="pill neutral">${esc(TECHNIQUES[k].label)} ${s.tecniche[k].length}</span>`).join('')}</span>` : ''}
     </span>
@@ -1982,17 +2089,22 @@ function sessionCardHTML(s, number) {
    ========================================================================== */
 function pmToolbarHTML() {
   const pm = S.pm;
+  const drawing = pm.tool !== 'eraser';
   return `<div class="pm-toolbar" id="pmToolbar">
     <div class="pm-colors" role="radiogroup" aria-label="Tipo di dolore">
-      ${PAIN_COLORS.map((c) => `<button class="swatch ${pm.tool === 'pen' && pm.color === c.color ? 'on' : ''}" data-pm="color" data-color="${c.color}" style="--sw:${c.color}" role="radio" aria-checked="${pm.tool === 'pen' && pm.color === c.color}"><span class="dot"></span><span>${esc(c.label)}</span></button>`).join('')}
+      ${PAIN_COLORS.map((c) => `<button class="swatch ${drawing && pm.color === c.color ? 'on' : ''}" data-pm="color" data-color="${c.color}" style="--sw:${c.color}" role="radio" aria-checked="${drawing && pm.color === c.color}"><span class="dot"></span><span>${esc(c.label)}</span></button>`).join('')}
     </div>
     <div class="pm-row">
-      <div class="seg" role="group" aria-label="Strumento">
-        <button data-pm="tool" data-tool="pen" class="${pm.tool === 'pen' ? 'on' : ''}">${ic('pen', 18)}<span>Penna</span></button>
-        <button data-pm="tool" data-tool="eraser" class="${pm.tool === 'eraser' ? 'on' : ''}">${ic('eraser', 18)}<span>Gomma</span></button>
+      <div class="seg pm-brushes" role="group" aria-label="Pennello">
+        ${BRUSHES.map((b) => `<button data-pm="brush" data-brush="${b.id}" class="${drawing && pm.brush === b.id ? 'on' : ''}" aria-pressed="${drawing && pm.brush === b.id}">${ic(b.icon, 18)}<span>${b.label}</span></button>`).join('')}
+        <button data-pm="tool" data-tool="eraser" class="${!drawing ? 'on' : ''}" aria-pressed="${!drawing}">${ic('eraser', 18)}<span>Gomma</span></button>
       </div>
+    </div>
+    <div class="pm-row">
       <label class="pm-size"><span class="size-dot-box"><span class="size-dot" id="pmSizeDot"></span></span>
         <input type="range" id="pmSize" min="2" max="48" step="1" value="${pm.size}" aria-label="Spessore del tratto"><output id="pmSizeVal">${pm.size}</output></label>
+      <label class="pm-size"><span class="pm-lbl">Opacità</span>
+        <input type="range" id="pmOpacity" min="15" max="100" step="5" value="${Math.round(pm.opacity * 100)}" aria-label="Opacità del tratto"><output id="pmOpacityVal">${Math.round(pm.opacity * 100)}%</output></label>
       <label class="toggle"><input type="checkbox" id="pmPressure" ${S.settings.pressure ? 'checked' : ''}><span class="track"></span><span>Pressione</span></label>
       <label class="toggle"><input type="checkbox" id="pmPencil" ${S.settings.onlyPencil ? 'checked' : ''}><span class="track"></span><span>Solo Pencil</span></label>
       <div class="pm-actions">
@@ -2003,6 +2115,106 @@ function pmToolbarHTML() {
   </div>`;
 }
 
+/* ---------- Tecniche osteopatiche ---------- */
+function techGroupHTML(s, cat, def) {
+  const sel = s.tecniche[cat];
+  const custom = ((S.settings.customTechniques || {})[cat] || []).filter((x) => !def.items.includes(x));
+  const extras = sel.filter((x) => !def.items.includes(x) && !custom.includes(x));
+  const all = [...def.items, ...custom, ...extras];
+  return `<div class="tech-group ${def.primary ? 'primary' : ''}"><h3>${esc(def.label)}<span id="tc-${cat}" class="${sel.length ? 'has' : ''}">${sel.length}</span></h3>
+    <div class="chips">${all.map((item) =>
+      `<button class="chip ${sel.includes(item) ? 'on' : ''}" data-action="tech-toggle" data-cat="${cat}" data-item="${esc(item)}" aria-pressed="${sel.includes(item)}">${esc(item)}</button>`).join('')}
+      <button class="chip add" data-action="tech-add" data-cat="${cat}">${ic('plus', 16)}<span>Aggiungi</span></button></div></div>`;
+}
+
+function techSectionHTML(s) {
+  const entries = Object.entries(TECHNIQUES);
+  const primary = entries.filter(([, d]) => d.primary);
+  const others = entries.filter(([, d]) => !d.primary);
+  const otherCount = others.reduce((n, [c]) => n + s.tecniche[c].length, 0);
+  return `${primary.map(([c, d]) => techGroupHTML(s, c, d)).join('')}
+    <details class="tech-more" ${otherCount ? 'open' : ''}>
+      <summary>Altre tecniche: ${others.map(([, d]) => esc(d.label.toLowerCase())).join(', ')}${otherCount ? `<span class="count">${otherCount}</span>` : ''}</summary>
+      <div class="tech-grid">${others.map(([c, d]) => techGroupHTML(s, c, d)).join('')}</div>
+    </details>`;
+}
+
+/* ---------- Pagamento della seduta ---------- */
+function payPill(s) {
+  const st = PAY_STATUS[s.pagamento] || PAY_STATUS.da_saldare;
+  const amount = s.pagamento !== 'gratuita' && Number.isFinite(s.importo) ? ` ${fmtEUR(s.importo)}` : '';
+  return `<span class="pill ${st.cls}">${st.label}${amount}</span>`;
+}
+
+function payCardInner(s) {
+  const st = s.pagamento;
+  const p = S.patients.get(s.patientId);
+  const others = unpaidOf(s.patientId).filter((x) => x.id !== s.id);
+  return `<div class="card-head"><h2>Pagamento</h2><span id="payPill">${payPill(s)}</span></div>
+    <div class="pay-grid">
+      <label class="field"><span>Importo della seduta (€)</span>
+        <input type="text" inputmode="decimal" data-bind="s.importo" value="${Number.isFinite(s.importo) ? esc(String(s.importo).replace('.', ',')) : ''}" placeholder="Es. 60" autocomplete="off"></label>
+      <div class="field"><span>Stato</span>
+        <div class="seg pay-seg" role="radiogroup" aria-label="Stato del pagamento">${Object.entries(PAY_STATUS).map(([k, v]) =>
+          `<button class="${st === k ? 'on' : ''} ps-${k}" data-action="pay-status" data-status="${k}" role="radio" aria-checked="${st === k}">${v.label}</button>`).join('')}</div></div>
+      ${st === 'saldata' ? `
+      <label class="field"><span>Pagata il</span><input type="date" data-bind="s.pagatoIl" value="${esc(s.pagatoIl)}"></label>
+      <label class="field"><span>Metodo</span><select data-bind="s.metodo"><option value="">Non indicato</option>${PAY_METHODS.map((m) => `<option ${s.metodo === m ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></label>
+      <label class="field"><span>N. ricevuta o fattura</span><input type="text" data-bind="s.ricevuta" value="${esc(s.ricevuta)}" autocomplete="off" placeholder="Facoltativo"></label>` : ''}
+    </div>
+    ${others.length ? `<p class="pay-note">${ic('info', 16)}<span>${esc(p?.nome || 'Il paziente')} ha ${others.length === 1 ? 'un’altra seduta' : `altre ${others.length} sedute`} da saldare (${esc(fmtEUR(sumFees(others)))}).</span>
+      <button class="btn sm" data-action="open-payments" data-id="${esc(s.patientId)}">Vedi pagamenti</button></p>` : ''}`;
+}
+
+/* ---------- Scheda paziente: pagamenti ---------- */
+function settleLabel(list) {
+  const n = list.length;
+  return n ? `Registra pagamento: ${plural(n, 'seduta', 'sedute')}, ${fmtEUR(sumFees(list))}` : 'Seleziona le sedute da saldare';
+}
+
+function tabPagamenti(p) {
+  const all = sessionsOf(p.id, 'asc');
+  const numberOf = new Map(all.map((s, i) => [s.id, i + 1]));
+  const unpaid = all.filter((s) => s.pagamento === 'da_saldare');
+  const paid = all.filter((s) => s.pagamento === 'saldata');
+  const free = all.filter((s) => s.pagamento === 'gratuita');
+  const year = todayISO().slice(0, 4);
+  const paidYear = sumFees(paid.filter((s) => (s.pagatoIl || s.date || '').startsWith(year)));
+  const missing = unpaid.filter((s) => !Number.isFinite(s.importo)).length;
+  const groups = new Map();
+  paid.forEach((s) => {
+    const k = JSON.stringify([s.pagatoIl || '', s.metodo || '', s.ricevuta || '']);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(s);
+  });
+  const history = [...groups.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+
+  return `<section class="stats pay-stats">
+      ${statCard(fmtEUR(sumFees(unpaid)), `Da saldare (${plural(unpaid.length, 'seduta', 'sedute')})`, 'euro')}
+      ${statCard(fmtEUR(paidYear), `Incassato nel ${year}`, 'check')}
+      ${statCard(String(free.length), free.length === 1 ? 'Seduta gratuita' : 'Sedute gratuite', 'info')}
+    </section>
+    <section class="card">
+      <div class="card-head"><h3>Sedute da saldare</h3>${unpaid.length > 1 ? '<button class="btn sm ghost" data-action="pay-select-all">Seleziona o deseleziona tutte</button>' : ''}</div>
+      ${unpaid.length ? `<ul class="pay-list">${unpaid.map((s) => `<li>
+          <label class="pay-row"><input type="checkbox" data-paysel value="${esc(s.id)}" checked>
+            <span class="grow"><strong>Seduta ${numberOf.get(s.id)}, ${esc(fmtDate(s.date, 'medium'))}</strong><small>${esc(s.sintomo || 'Sintomo non indicato')}</small></span>
+            <span class="amt">${Number.isFinite(s.importo) ? esc(fmtEUR(s.importo)) : '<span class="muted">Importo non indicato</span>'}</span></label>
+          <button class="icon-btn" data-action="open-session" data-id="${esc(s.id)}" aria-label="Apri la seduta">${ic('chevR', 18)}</button></li>`).join('')}</ul>
+        ${missing ? `<p class="hint">${plural(missing, 'seduta', 'sedute')} senza importo: aprile per indicarlo, oppure imposta la tariffa predefinita in Impostazioni.</p>` : ''}
+        <div class="row-end"><button class="btn primary" id="paySettleBtn" data-action="pay-settle">${ic('check', 18)}<span>${esc(settleLabel(unpaid))}</span></button></div>`
+      : emptyState('Nessuna seduta da saldare', 'Il paziente è in regola con i pagamenti.', 'check')}
+    </section>
+    <section class="card">
+      <div class="card-head"><h3>Storico dei pagamenti</h3></div>
+      ${history.length ? `<ul class="pay-history">${history.map(([k, list]) => {
+        const [d, m, r] = JSON.parse(k);
+        const detail = [m, r ? `ricevuta ${r}` : '', `${plural(list.length, 'seduta', 'sedute')} del ${list.map((s) => fmtDate(s.date, 'dm')).join(', ')}`].filter(Boolean).join(' · ');
+        return `<li><span class="grow"><strong>${d ? esc(fmtDate(d, 'medium')) : 'Data non indicata'}</strong><small>${esc(detail)}</small></span><span class="amt">${esc(fmtEUR(sumFees(list)))}</span></li>`;
+      }).join('')}</ul>` : emptyState('Nessun pagamento registrato', 'I pagamenti registrati compariranno qui, raggruppati per data.', 'clock')}
+    </section>`;
+}
+
 function viewSession() {
   const s = S.sessions.get(S.sessionId);
   if (!s) return `<div class="page">${emptyState('Seduta non trovata', 'Potrebbe essere stata eliminata.', 'alert')}</div>`;
@@ -2011,14 +2223,6 @@ function viewSession() {
   const number = asc.findIndex((x) => x.id === s.id) + 1;
   const ci = (p?.anamnesi.controindicazioni || '').trim();
   const appt = s.appointmentId ? S.appointments.get(s.appointmentId) : null;
-
-  const techHTML = Object.entries(TECHNIQUES).map(([cat, def]) => {
-    const sel = s.tecniche[cat];
-    const extras = sel.filter((x) => !def.items.includes(x));
-    return `<div class="tech-group"><h3>${esc(def.label)}<span id="tc-${cat}" class="${sel.length ? 'has' : ''}">${sel.length}</span></h3>
-      <div class="chips">${[...def.items, ...extras].map((item) =>
-        `<button class="chip ${sel.includes(item) ? 'on' : ''}" data-action="tech-toggle" data-cat="${cat}" data-item="${esc(item)}" aria-pressed="${sel.includes(item)}">${esc(item)}</button>`).join('')}</div></div>`;
-  }).join('');
 
   return `<div class="page">
     <header class="session-head">
@@ -2043,12 +2247,15 @@ function viewSession() {
       </div>
     </section>
 
+    <section class="card" id="payCard">${payCardInner(s)}</section>
+
     <section class="card">
-      <div class="card-head"><h2>Mappa del dolore</h2><span class="muted sm">Disegna con Apple Pencil; la pressione modula lo spessore.</span></div>
+      <div class="card-head"><h2>Mappa del dolore</h2><span class="muted sm">Scegli pennello e opacità: con tratti semitrasparenti la sagoma resta visibile.</span></div>
       ${pmToolbarHTML()}
       <div class="pm-wrap" id="pmWrap">
         <canvas id="pmBg" aria-hidden="true"></canvas>
         <canvas id="pmDraw" role="img" aria-label="Mappa del dolore, vista anteriore e posteriore"></canvas>
+        <canvas id="pmStroke" aria-hidden="true"></canvas>
         <div class="pm-cursor" id="pmCursor"></div>
       </div>
       <div class="pm-legend"><span>DX e SX indicano i lati del paziente.</span><span>Il disegno viene salvato automaticamente con la seduta.</span></div>
@@ -2063,7 +2270,7 @@ function viewSession() {
 
     <section class="card">
       <div class="card-head"><h2>Tecniche osteopatiche</h2><span class="muted sm">Tocca per selezionare</span></div>
-      <div class="tech-grid">${techHTML}</div>
+      <div id="techSection">${techSectionHTML(s)}</div>
       <label class="field" style="margin-top:16px"><span>Dettagli sulle tecniche</span>
         <textarea data-bind="s.tecnicheNote" rows="3" placeholder="Distretti trattati, parametri, risposta tissutale…">${esc(s.tecnicheNote)}</textarea></label>
     </section>
@@ -2188,6 +2395,17 @@ function viewSecurityCard() {
   </section>`;
 }
 
+function customTechCardHTML() {
+  const custom = S.settings.customTechniques || {};
+  const cats = Object.keys(TECHNIQUES).filter((c) => (custom[c] || []).length);
+  return `<section class="card"><h2>Tecniche personalizzate</h2>
+    ${cats.length ? `<div class="custom-tech">${cats.map((c) => `<div><strong>${esc(TECHNIQUES[c].label)}</strong><div class="chips" style="margin-top:8px">${custom[c].map((item) =>
+      `<button class="chip" data-action="tech-custom-remove" data-cat="${c}" data-item="${esc(item)}" aria-label="Rimuovi ${esc(item)}">${esc(item)}${ic('x', 14)}</button>`).join('')}</div></div>`).join('')}</div>
+      <p class="hint">Tocca una tecnica per toglierla dall’elenco. Le sedute in cui l’hai già usata la conservano.</p>`
+    : '<p class="hint">Nella seduta, il pulsante “Aggiungi” di ogni gruppo crea una tecnica tua, che resterà disponibile in tutte le sedute successive.</p>'}
+  </section>`;
+}
+
 function viewSettings() {
   const st = S.settings;
   const themes = [['auto', 'Automatico', 'auto'], ['light', 'Chiaro', 'sun'], ['dark', 'Scuro', 'moon']];
@@ -2200,8 +2418,12 @@ function viewSettings() {
         <label class="field"><span>Nome del professionista</span><input type="text" data-bind="set.therapistName" value="${esc(st.therapistName)}" placeholder="Es. Dott.ssa Bianchi" autocomplete="off"></label>
         <label class="field"><span>Durata predefinita degli appuntamenti</span><select data-bind="set.defaultDuration">${[30, 45, 60, 75, 90].map((m) => `<option value="${m}" ${Number(st.defaultDuration) === m ? 'selected' : ''}>${m} minuti</option>`).join('')}</select></label>
         <label class="field"><span>Primo orario della giornata</span><input type="time" data-bind="set.dayStart" value="${esc(st.dayStart)}" step="900"></label>
+        <label class="field"><span>Tariffa predefinita per seduta (€)</span><input type="text" inputmode="decimal" data-bind="set.defaultFee" value="${Number.isFinite(st.defaultFee) ? esc(String(st.defaultFee).replace('.', ',')) : ''}" placeholder="Es. 60" autocomplete="off"></label>
       </div>
+      <p class="hint">La tariffa viene proposta come importo di ogni nuova seduta; puoi modificarla seduta per seduta.</p>
     </section>
+
+    ${customTechCardHTML()}
 
     ${viewSecurityCard()}
 
@@ -2393,66 +2615,168 @@ const PainMap = {
       };
     };
 
+    // Strato temporaneo: ogni tratto si disegna qui a piena intensità e al termine
+    // viene fuso sul disegno con l'opacità scelta, così resta uniforme e senza macchie.
+    const sc = $('#pmStroke');
+    sc.width = PM_W;
+    sc.height = PM_H;
+    const sctx = sc.getContext('2d');
+    let target = sctx;
+    let brush = 'pen';
+    let erasing = false;
+    let dist = 0;
+    const rand = Math.random;
+
     const widthFor = (p, type) => {
-      const base = S.pm.size * (S.pm.tool === 'eraser' ? 2.2 : 1);
-      if (S.settings.pressure && type === 'pen') return Math.max(0.8, base * (0.2 + 1.6 * p));
-      return base;
+      const base = S.pm.size;
+      if (S.pm.tool === 'eraser') return base * 2.2;
+      const pr = S.settings.pressure && type === 'pen';
+      switch (S.pm.brush) {
+        case 'marker': return base * 1.8;
+        case 'pencil': return Math.max(1, base * 0.6 * (pr ? 0.4 + 1.2 * p : 1));
+        case 'spray': return base * 1.8 * (pr ? 0.6 + 0.8 * p : 1);
+        case 'dots': return Math.max(2, base * 0.7 * (pr ? 0.6 + 0.8 * p : 1));
+        default: return pr ? Math.max(0.8, base * (0.2 + 1.6 * p)) : base;
+      }
     };
 
     const applyStyle = () => {
-      ctx.globalCompositeOperation = S.pm.tool === 'eraser' ? 'destination-out' : 'source-over';
-      ctx.strokeStyle = S.pm.color;
-      ctx.fillStyle = S.pm.color;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
+      erasing = S.pm.tool === 'eraser';
+      brush = erasing ? 'pen' : S.pm.brush;
+      target = erasing ? ctx : sctx;
+      target.globalCompositeOperation = erasing ? 'destination-out' : 'source-over';
+      target.globalAlpha = 1;
+      target.strokeStyle = erasing ? '#000' : S.pm.color;
+      target.fillStyle = erasing ? '#000' : S.pm.color;
+      target.lineCap = 'round';
+      target.lineJoin = 'round';
+      sc.style.opacity = String(S.pm.opacity);
     };
 
     const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
 
+    // Matita: grana irregolare lungo il tratto
+    const pencilGrain = (a, b, w) => {
+      const len = Math.hypot(b.x - a.x, b.y - a.y);
+      const steps = Math.max(1, Math.ceil(len / Math.max(0.8, w * 0.35)));
+      const n = Math.max(3, Math.round(w * 1.3));
+      for (let i = 1; i <= steps; i++) {
+        const t = i / steps;
+        const cx = a.x + (b.x - a.x) * t;
+        const cy = a.y + (b.y - a.y) * t;
+        for (let k = 0; k < n; k++) {
+          const ang = rand() * Math.PI * 2;
+          const r = Math.sqrt(rand()) * w / 2;
+          const s = 0.7 + rand() * 1.2;
+          target.globalAlpha = 0.35 + rand() * 0.55;
+          target.fillRect(cx + Math.cos(ang) * r - s / 2, cy + Math.sin(ang) * r - s / 2, s, s);
+        }
+      }
+      target.globalAlpha = 1;
+    };
+
+    // Aerografo: nebulizzazione più densa al centro, ideale per dolore diffuso o irradiato
+    const sprayAt = (x, y, w, p) => {
+      const radius = w * 0.75 + 2;
+      const n = Math.max(6, Math.round(radius * (0.6 + p) * 1.5));
+      const s = Math.max(1.4, w / 11);
+      target.globalAlpha = 0.7;
+      for (let k = 0; k < n; k++) {
+        const ang = rand() * Math.PI * 2;
+        const r = radius * rand() * (0.35 + 0.65 * rand());
+        target.fillRect(x + Math.cos(ang) * r - s / 2, y + Math.sin(ang) * r - s / 2, s, s);
+      }
+      target.globalAlpha = 1;
+    };
+
+    const dot = (x, y, w) => { target.beginPath(); target.arc(x, y, w / 2, 0, Math.PI * 2); target.fill(); };
+
+    // Puntini: punti regolari lungo il percorso (utile per parestesie e formicolii)
+    const dotsAlong = (a, b, w) => {
+      const spacing = Math.max(w * 2.1, 6);
+      const len = Math.hypot(b.x - a.x, b.y - a.y);
+      let covered = 0;
+      let d = dist;
+      while (len > 0 && d + (len - covered) >= spacing) {
+        covered += spacing - d;
+        d = 0;
+        const t = covered / len;
+        dot(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, w);
+      }
+      dist = d + (len - covered);
+    };
+
     const startStroke = (pt) => {
       pts = [pt];
+      dist = 0;
       lastW = widthFor(pt.p, activeType);
-      ctx.beginPath();
-      ctx.arc(pt.x, pt.y, lastW / 2, 0, Math.PI * 2);
-      ctx.fill();
+      if (brush === 'spray') { sprayAt(pt.x, pt.y, lastW, pt.p); return; }
+      if (brush === 'pencil') { pencilGrain(pt, pt, lastW); return; }
+      dot(pt.x, pt.y, lastW);
     };
 
     const addPoint = (pt) => {
       const prev = pts[pts.length - 1];
       if (prev && Math.hypot(pt.x - prev.x, pt.y - prev.y) < 0.6) return;
+      const w = brush === 'marker' ? widthFor(pt.p, activeType) : lastW * 0.55 + widthFor(pt.p, activeType) * 0.45;
+      if (brush === 'spray' || brush === 'pencil' || brush === 'dots') {
+        if (brush === 'spray') {
+          const len = Math.hypot(pt.x - prev.x, pt.y - prev.y);
+          const steps = Math.max(1, Math.ceil(len / Math.max(1.5, w / 4)));
+          for (let i = 1; i <= steps; i++) {
+            const t = i / steps;
+            sprayAt(prev.x + (pt.x - prev.x) * t, prev.y + (pt.y - prev.y) * t, w, pt.p);
+          }
+        } else if (brush === 'pencil') {
+          pencilGrain(prev, pt, w);
+        } else {
+          dotsAlong(prev, pt, w);
+        }
+        pts = [pt];
+        lastW = w;
+        return;
+      }
       pts.push(pt);
       if (pts.length > 3) pts.shift();
-      const w = lastW * 0.55 + widthFor(pt.p, activeType) * 0.45;
-      ctx.lineWidth = w;
-      ctx.beginPath();
+      target.lineWidth = w;
+      target.beginPath();
       if (pts.length === 2) {
         const m = mid(pts[0], pts[1]);
-        ctx.moveTo(pts[0].x, pts[0].y);
-        ctx.lineTo(m.x, m.y);
+        target.moveTo(pts[0].x, pts[0].y);
+        target.lineTo(m.x, m.y);
       } else {
         const [p0, p1, p2] = pts;
         const m1 = mid(p0, p1);
         const m2 = mid(p1, p2);
-        ctx.moveTo(m1.x, m1.y);
-        ctx.quadraticCurveTo(p1.x, p1.y, m2.x, m2.y);
+        target.moveTo(m1.x, m1.y);
+        target.quadraticCurveTo(p1.x, p1.y, m2.x, m2.y);
       }
-      ctx.stroke();
+      target.stroke();
       lastW = w;
     };
 
     const endStroke = () => {
-      if (pts.length >= 2) {
+      if ((brush === 'pen' || brush === 'marker') && pts.length >= 2) {
         const a = pts[pts.length - 2];
         const b = pts[pts.length - 1];
         const m = mid(a, b);
-        ctx.lineWidth = lastW;
-        ctx.beginPath();
-        ctx.moveTo(m.x, m.y);
-        ctx.lineTo(b.x, b.y);
-        ctx.stroke();
+        target.lineWidth = lastW;
+        target.beginPath();
+        target.moveTo(m.x, m.y);
+        target.lineTo(b.x, b.y);
+        target.stroke();
       }
       pts = [];
+      if (!erasing) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = S.pm.opacity;
+        ctx.drawImage(sc, 0, 0);
+        ctx.restore();
+        sctx.clearRect(0, 0, PM_W, PM_H);
+      }
       ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
     };
 
     const showCursor = (e) => {
@@ -2471,6 +2795,8 @@ const PainMap = {
         // Palm rejection: se la penna arriva mentre un tocco sta disegnando, il tratto del palmo viene annullato
         if (e.pointerType === 'pen' && activeType === 'touch' && undo.length) {
           ctx.putImageData(undo.pop(), 0, 0);
+          sctx.clearRect(0, 0, PM_W, PM_H);
+          pts = [];
           drawing = false;
         } else {
           return;
@@ -2525,12 +2851,21 @@ const PainMap = {
         b.classList.toggle('on', on);
         b.setAttribute('aria-checked', String(on));
       });
-      $$('[data-pm="tool"]', toolbar).forEach((b) => b.classList.toggle('on', b.dataset.tool === S.pm.tool));
+      $$('[data-pm="brush"]', toolbar).forEach((b) => {
+        const on = S.pm.tool === 'pen' && b.dataset.brush === S.pm.brush;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      $$('[data-pm="tool"]', toolbar).forEach((b) => {
+        b.classList.toggle('on', b.dataset.tool === S.pm.tool);
+        b.setAttribute('aria-pressed', String(b.dataset.tool === S.pm.tool));
+      });
       const r = cv.getBoundingClientRect();
       const d = Math.max(3, Math.min(30, (widthFor(0.5, 'mouse') * (r.width || PM_W / 2)) / PM_W));
       sizeDot.style.width = sizeDot.style.height = `${d}px`;
       sizeDot.classList.toggle('eraser', S.pm.tool === 'eraser');
       sizeDot.style.background = S.pm.tool === 'eraser' ? '' : S.pm.color;
+      sizeDot.style.opacity = S.pm.tool === 'eraser' ? '1' : String(S.pm.opacity);
     };
 
     const onToolbarClick = (e) => {
@@ -2539,6 +2874,13 @@ const PainMap = {
       const kind = b.dataset.pm;
       if (kind === 'color') { S.pm.color = b.dataset.color; S.pm.tool = 'pen'; syncToolbar(); }
       else if (kind === 'tool') { S.pm.tool = b.dataset.tool; syncToolbar(); }
+      else if (kind === 'brush') {
+        S.pm.brush = b.dataset.brush;
+        S.pm.tool = 'pen';
+        S.settings.brush = S.pm.brush;
+        syncToolbar();
+        Saver.schedule('settings', saveSettings, 800);
+      }
       else if (kind === 'undo') {
         if (!undo.length) { toast('Non ci sono tratti da annullare'); return; }
         ctx.putImageData(undo.pop(), 0, 0);
@@ -2559,6 +2901,16 @@ const PainMap = {
       S.pm.size = Number(sizeInput.value);
       sizeVal.textContent = sizeInput.value;
       S.settings.brushSize = S.pm.size;
+      syncToolbar();
+      Saver.schedule('settings', saveSettings, 800);
+    });
+    const opInput = $('#pmOpacity');
+    const opVal = $('#pmOpacityVal');
+    opInput.addEventListener('input', () => {
+      S.pm.opacity = Number(opInput.value) / 100;
+      opVal.textContent = `${opInput.value}%`;
+      S.settings.brushOpacity = S.pm.opacity;
+      sc.style.opacity = String(S.pm.opacity);
       syncToolbar();
       Saver.schedule('settings', saveSettings, 800);
     });
@@ -2642,7 +2994,8 @@ async function createSession(patientId, { date = null, appointmentId = null, ope
       toast(`Appuntamento delle ${appt.time} segnato come eseguito`, 'ok');
     }
   }
-  const s = normalizeSession({ id: uid(), patientId, date: day, appointmentId: linked, createdAt: now, updatedAt: now });
+  const fee = Number.isFinite(S.settings.defaultFee) ? S.settings.defaultFee : null;
+  const s = normalizeSession({ id: uid(), patientId, date: day, appointmentId: linked, importo: fee, pagamento: 'da_saldare', createdAt: now, updatedAt: now });
   await DB.put('sessions', s);
   S.sessions.set(s.id, s);
   if (open) openSession(s.id);
@@ -3112,6 +3465,79 @@ function installTouchIcon() {
 }
 
 /* ==========================================================================
+   23a. PAGAMENTI
+   ========================================================================== */
+function revealActiveTab() {
+  const t = $('.tabs .tab.on');
+  if (t && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+
+function updateSettleButton() {
+  const list = $$('[data-paysel]:checked').map((x) => S.sessions.get(x.value)).filter(Boolean);
+  const btn = $('#paySettleBtn');
+  if (!btn) return;
+  btn.querySelector('span').textContent = settleLabel(list);
+  btn.disabled = !list.length;
+}
+
+function openSettleModal(list) {
+  const missing = list.filter((s) => !Number.isFinite(s.importo)).length;
+  const body = `<div class="stack">
+    <p>Stai registrando il pagamento di <strong>${plural(list.length, 'seduta', 'sedute')}</strong> per un totale di <strong>${esc(fmtEUR(sumFees(list)))}</strong>.</p>
+    ${missing ? `<p class="hint">${plural(missing, 'seduta', 'sedute')} senza importo: il totale non le include.</p>` : ''}
+    <div class="form-grid">
+      <label class="field"><span>Data del pagamento</span><input type="date" id="stDate" value="${todayISO()}"></label>
+      <label class="field"><span>Metodo</span><select id="stMethod"><option value="">Non indicato</option>${PAY_METHODS.map((m) => `<option>${esc(m)}</option>`).join('')}</select></label>
+      <label class="field wide"><span>N. ricevuta o fattura (facoltativo)</span><input type="text" id="stReceipt" autocomplete="off"></label>
+    </div></div>`;
+  Modal.open({
+    title: 'Registra pagamento',
+    body,
+    footer: `<span class="spacer"></span><button class="btn" data-modal-close>Annulla</button><button class="btn primary" id="stOk">${ic('check', 18)}<span>Segna come saldate</span></button>`,
+    onMount(el, close) {
+      el.querySelector('#stOk').addEventListener('click', async () => {
+        const date = el.querySelector('#stDate').value || todayISO();
+        const method = el.querySelector('#stMethod').value;
+        const receipt = el.querySelector('#stReceipt').value.trim();
+        list.forEach((s) => {
+          s.pagamento = 'saldata';
+          s.pagatoIl = date;
+          s.metodo = method;
+          s.ricevuta = receipt;
+          stamp(s);
+        });
+        await DB.putMany('sessions', list);
+        close();
+        render();
+        toast(`Pagamento registrato: ${plural(list.length, 'seduta', 'sedute')}, ${fmtEUR(sumFees(list))}`, 'ok', 4500);
+      });
+    }
+  });
+}
+
+function promptDialog(title, { label = '', placeholder = '', ok = 'OK', value = '' } = {}) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (v) => { if (!settled) { settled = true; resolve(v); } };
+    Modal.open({
+      title,
+      size: 'sm',
+      body: `<label class="field"><span>${esc(label)}</span><input type="text" id="promptInput" value="${esc(value)}" placeholder="${esc(placeholder)}" autocomplete="off"></label>`,
+      footer: `<span class="spacer"></span><button class="btn" data-m="no">Annulla</button><button class="btn primary" data-m="yes">${esc(ok)}</button>`,
+      onClose: () => finish(null),
+      onMount: (el, close) => {
+        const input = el.querySelector('#promptInput');
+        const confirm = () => { finish(input.value); close(); };
+        el.querySelector('[data-m="yes"]').addEventListener('click', confirm);
+        el.querySelector('[data-m="no"]').addEventListener('click', () => close());
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); confirm(); } });
+        setTimeout(() => input.focus(), 60);
+      }
+    });
+  });
+}
+
+/* ==========================================================================
    23b. PASSWORD DELL'APP
    ========================================================================== */
 function openPasswordModal(mode) {
@@ -3223,7 +3649,7 @@ const ACTIONS = {
 
   'back-to-list': async () => { await Saver.flush(); S.patientId = null; render(); },
 
-  'patient-tab': async (el) => { await Saver.flush(); S.patientTab = el.dataset.tab; render(); },
+  'patient-tab': async (el) => { await Saver.flush(); S.patientTab = el.dataset.tab; render(); revealActiveTab(); },
 
   'new-session': (el) => createSession(el.dataset.patient),
 
@@ -3316,6 +3742,13 @@ const ACTIONS = {
     el.setAttribute('aria-pressed', String(on));
     const counter = $('#tc-' + cat);
     if (counter) { counter.textContent = list.length; counter.classList.toggle('has', list.length > 0); }
+    const more = $('.tech-more > summary');
+    if (more) {
+      const n = Object.entries(TECHNIQUES).filter(([, d]) => !d.primary).reduce((t, [c]) => t + s.tecniche[c].length, 0);
+      let badge = more.querySelector('.count');
+      if (n && !badge) { badge = document.createElement('span'); badge.className = 'count'; more.appendChild(badge); }
+      if (badge) { if (n) badge.textContent = n; else badge.remove(); }
+    }
     stamp(s);
     Saver.schedule('session:' + s.id, () => DB.put('sessions', s), 300);
   },
@@ -3343,6 +3776,74 @@ const ACTIONS = {
     const granted = await navigator.storage.persist();
     toast(granted ? 'Archiviazione persistente attiva' : 'Richiesta non accolta: aggiungi l’app alla schermata Home e riprova', granted ? 'ok' : 'info', 5000);
     fillStorageInfo();
+  },
+
+  'pay-status': (el) => {
+    const s = currentSession();
+    if (!s) return;
+    const st = el.dataset.status;
+    s.pagamento = st;
+    if (st === 'saldata') { if (!s.pagatoIl) s.pagatoIl = todayISO(); } else { s.pagatoIl = ''; }
+    stamp(s);
+    Saver.schedule('session:' + s.id, () => DB.put('sessions', s), 250);
+    const card = $('#payCard');
+    if (card) card.innerHTML = payCardInner(s);
+  },
+
+  'open-payments': async (el) => {
+    await Saver.flush();
+    S.patientId = el.dataset.id;
+    S.patientTab = 'pagamenti';
+    S.sessionId = null;
+    await go('patients');
+    revealActiveTab();
+  },
+
+  'pay-select-all': () => {
+    const boxes = $$('[data-paysel]');
+    const allOn = boxes.every((b) => b.checked);
+    boxes.forEach((b) => { b.checked = !allOn; });
+    updateSettleButton();
+  },
+
+  'pay-settle': () => {
+    const list = $$('[data-paysel]:checked').map((x) => S.sessions.get(x.value)).filter(Boolean);
+    if (!list.length) { toast('Seleziona almeno una seduta'); return; }
+    openSettleModal(list);
+  },
+
+  'tech-add': async (el) => {
+    const s = currentSession();
+    if (!s) return;
+    const cat = el.dataset.cat;
+    const name = await promptDialog(`Nuova tecnica: ${TECHNIQUES[cat].label}`, {
+      label: 'Nome della tecnica', placeholder: 'Es. Bilanciamento dei fluidi', ok: 'Aggiungi' });
+    const item = (name || '').trim().replace(/\s+/g, ' ');
+    if (!item) return;
+    const custom = { ...(S.settings.customTechniques || {}) };
+    const list = [...(custom[cat] || [])];
+    if (!TECHNIQUES[cat].items.includes(item) && !list.includes(item)) list.push(item);
+    custom[cat] = list;
+    S.settings.customTechniques = custom;
+    await saveSettings();
+    if (!s.tecniche[cat].includes(item)) s.tecniche[cat].push(item);
+    stamp(s);
+    Saver.schedule('session:' + s.id, () => DB.put('sessions', s), 250);
+    const box = $('#techSection');
+    if (box) box.innerHTML = techSectionHTML(s);
+    toast(`“${item}” aggiunta a ${TECHNIQUES[cat].label}`, 'ok');
+  },
+
+  'tech-custom-remove': async (el) => {
+    const { cat, item } = el.dataset;
+    const ok = await confirmDialog(`Togliere “${item}” dall’elenco delle tecniche ${TECHNIQUES[cat].label.toLowerCase()}? Le sedute in cui è già stata usata la conservano.`,
+      { title: 'Tecnica personalizzata', ok: 'Togli', danger: true });
+    if (!ok) return;
+    const custom = { ...(S.settings.customTechniques || {}) };
+    custom[cat] = (custom[cat] || []).filter((x) => x !== item);
+    S.settings.customTechniques = custom;
+    await saveSettings();
+    render();
   },
 
   'lock-enable': () => openPasswordModal('enable'),
@@ -3385,15 +3886,16 @@ function handleBind(el) {
   } else if (scope === 's') {
     const s = currentSession();
     if (!s) return;
-    s[field] = value;
+    s[field] = field === 'importo' ? parseAmount(value) : value;
     stamp(s);
     Saver.schedule('session:' + s.id, () => DB.put('sessions', s));
+    if (field === 'importo') { const pill = $('#payPill'); if (pill) pill.innerHTML = payPill(s); }
     if (field === 'date') {
       const t = $('#sessionTitle');
       if (t) t.textContent = `Seduta del ${fmtDate(value, 'medium')}`;
     }
   } else if (scope === 'set') {
-    S.settings[field] = field === 'defaultDuration' ? Number(value) : value;
+    S.settings[field] = field === 'defaultDuration' ? Number(value) : field === 'defaultFee' ? parseAmount(value) : value;
     Saver.schedule('settings', saveSettings);
     if (field === 'studioName' || field === 'therapistName') {
       const brand = $('#sidebar .brand-text');
@@ -3434,6 +3936,7 @@ function bindGlobalEvents() {
   });
 
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && Modal.stack.length) Modal.close(); });
+  document.addEventListener('change', (e) => { if (e.target && e.target.matches && e.target.matches('[data-paysel]')) updateSettleButton(); });
 
   const flushNow = () => { Saver.flush(); };
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushNow(); });
