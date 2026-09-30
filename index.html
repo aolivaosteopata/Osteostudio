@@ -1,0 +1,3504 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="OsteoStudio">
+<meta name="format-detection" content="telephone=no, email=no, address=no">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#edf1ef" id="metaTheme">
+<meta name="referrer" content="no-referrer">
+<!-- Blocca qualunque connessione verso altri siti: sono ammessi solo i file dell'app stessa
+     (service worker, manifest e icone per l'uso offline dalla schermata Home) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob:; frame-src blob: data:; object-src blob:; media-src blob: data:; font-src data:; connect-src data: blob:; manifest-src 'self'; worker-src 'self'; child-src 'self' blob: data:; base-uri 'none'; form-action 'none'">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>OsteoStudio · Gestionale osteopatico offline</title>
+<style>
+/* ==========================================================================
+   1. DESIGN TOKENS
+   ========================================================================== */
+:root{
+  --bg:#edf1ef;
+  --surface:#fbfcfb;
+  --surface-2:#f3f6f5;
+  --surface-3:#e5ebe8;
+  --border:#d6dfdb;
+  --border-strong:#bfccc7;
+  --text:#1a2622;
+  --muted:#586863;
+  --faint:#8a9893;
+  --accent:#2c6e63;
+  --accent-strong:#225a50;
+  --accent-soft:#dfeeea;
+  --accent-text:#ffffff;
+  --info:#33609f;
+  --info-soft:#e5edf8;
+  --ok:#2a7549;
+  --ok-soft:#e0f1e6;
+  --warn:#8f5c00;
+  --warn-soft:#f9efd6;
+  --danger:#b73a35;
+  --danger-soft:#f9e6e5;
+  --body-fill:#e2e9e6;
+  --body-stroke:#83978f;
+  --body-detail:#a6b7b0;
+  --shadow-sm:0 1px 2px rgba(18,40,34,.06);
+  --shadow:0 1px 2px rgba(18,40,34,.05), 0 8px 24px rgba(18,40,34,.06);
+  --shadow-lg:0 24px 64px rgba(10,26,22,.24);
+  --r-lg:20px;
+  --r:14px;
+  --r-sm:10px;
+  --sidebar:236px;
+  --font:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif;
+  --font-display:ui-serif, "New York", "Iowan Old Style", "Palatino", Georgia, serif;
+  --safe-t:env(safe-area-inset-top, 0px);
+  --safe-b:env(safe-area-inset-bottom, 0px);
+  --safe-l:env(safe-area-inset-left, 0px);
+  --safe-r:env(safe-area-inset-right, 0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1513; --surface:#161e1c; --surface-2:#1b2522; --surface-3:#232f2c;
+    --border:#2a3834; --border-strong:#3a4b46;
+    --text:#e1e9e6; --muted:#9dafa9; --faint:#6f807a;
+    --accent:#63b3a2; --accent-strong:#7cc4b4; --accent-soft:#1c3531; --accent-text:#0b1614;
+    --info:#86a9e8; --info-soft:#1b283d; --ok:#72c795; --ok-soft:#183024;
+    --warn:#e2b150; --warn-soft:#33291a; --danger:#ee7d76; --danger-soft:#3a1f1d;
+    --body-fill:#1f2b28; --body-stroke:#72877f; --body-detail:#46594f;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.3); --shadow:0 1px 2px rgba(0,0,0,.25), 0 10px 28px rgba(0,0,0,.28);
+    --shadow-lg:0 24px 64px rgba(0,0,0,.55);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1513; --surface:#161e1c; --surface-2:#1b2522; --surface-3:#232f2c;
+  --border:#2a3834; --border-strong:#3a4b46;
+  --text:#e1e9e6; --muted:#9dafa9; --faint:#6f807a;
+  --accent:#63b3a2; --accent-strong:#7cc4b4; --accent-soft:#1c3531; --accent-text:#0b1614;
+  --info:#86a9e8; --info-soft:#1b283d; --ok:#72c795; --ok-soft:#183024;
+  --warn:#e2b150; --warn-soft:#33291a; --danger:#ee7d76; --danger-soft:#3a1f1d;
+  --body-fill:#1f2b28; --body-stroke:#72877f; --body-detail:#46594f;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3); --shadow:0 1px 2px rgba(0,0,0,.25), 0 10px 28px rgba(0,0,0,.28);
+  --shadow-lg:0 24px 64px rgba(0,0,0,.55);
+  color-scheme:dark;
+}
+
+/* ==========================================================================
+   2. BASE
+   ========================================================================== */
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  font-family:var(--font); font-size:16px; line-height:1.5; color:var(--text); background:var(--bg);
+  -webkit-font-smoothing:antialiased; -webkit-text-size-adjust:100%; overflow:hidden;
+  -webkit-tap-highlight-color:transparent; overscroll-behavior:none;
+}
+h1,h2,h3,h4{margin:0;line-height:1.2;font-weight:600}
+h1{font-family:var(--font-display);font-size:30px;font-weight:600;letter-spacing:-.01em}
+h2{font-size:18px}
+h3{font-size:16px}
+p{margin:0}
+code{font-size:.92em;background:var(--surface-3);padding:1px 6px;border-radius:6px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-user-select:none;user-select:none}
+:focus-visible{outline:3px solid color-mix(in srgb, var(--accent) 55%, transparent);outline-offset:2px}
+.ic{flex:none;display:block}
+.muted{color:var(--muted)}
+.sm{font-size:14px}
+.spacer{flex:1}
+[hidden]{display:none !important}
+@media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
+
+/* ==========================================================================
+   3. STRUTTURA APP
+   ========================================================================== */
+.app{display:grid;grid-template-columns:var(--sidebar) 1fr;height:100vh;height:100dvh}
+.sidebar{
+  display:flex;flex-direction:column;gap:6px;background:var(--surface);border-right:1px solid var(--border);
+  padding:calc(18px + var(--safe-t)) 14px calc(16px + var(--safe-b)) calc(14px + var(--safe-l));
+  overflow-y:auto;
+}
+.brand{display:flex;align-items:center;gap:12px;padding:4px 8px 18px}
+.brand-mark svg{display:block;width:40px;height:40px}
+.brand-text{display:flex;flex-direction:column;min-width:0}
+.brand-text strong{font-family:var(--font-display);font-size:19px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-text span{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav-item{
+  display:flex;align-items:center;gap:12px;min-height:48px;padding:0 14px;border:0;border-radius:var(--r);
+  background:transparent;color:var(--muted);font-weight:500;text-align:left;transition:background .15s,color .15s;
+}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--accent-soft);color:var(--accent-strong)}
+.nav-item .count{margin-left:auto;font-size:12px;background:var(--surface-3);color:var(--muted);border-radius:99px;padding:1px 8px}
+.sidebar-foot{margin-top:auto;display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--border)}
+.offline-badge{display:flex;align-items:center;gap:8px;padding:6px 14px;font-size:13px;color:var(--muted)}
+.offline-badge i{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block}
+.main{position:relative;overflow:hidden;min-width:0;height:100vh;height:100dvh}
+.page{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(26px + var(--safe-t)) calc(30px + var(--safe-r)) calc(48px + var(--safe-b)) 30px}
+.page.narrow > *{max-width:880px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.page-head .sub{color:var(--muted);margin-top:4px}
+.date-line{color:var(--muted);font-size:15px;margin-bottom:4px}
+.head-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+@media (max-width: 1000px){
+  :root{--sidebar:76px}
+  .brand{justify-content:center;padding:4px 0 16px}
+  .brand-text,.nav-item span,.offline-badge span,.nav-item .count{display:none}
+  .nav-item{justify-content:center;padding:0}
+  .offline-badge{justify-content:center;padding:6px 0}
+  .page{padding-left:22px;padding-right:calc(22px + var(--safe-r))}
+}
+
+/* ==========================================================================
+   4. COMPONENTI
+   ========================================================================== */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;
+  border-radius:var(--r-sm);border:1px solid var(--border-strong);background:var(--surface);color:var(--text);
+  font-weight:500;white-space:nowrap;text-decoration:none;transition:background .15s,border-color .15s,transform .08s;
+}
+.btn:hover{background:var(--surface-2)}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-text)}
+.btn.primary:hover{background:var(--accent-strong);border-color:var(--accent-strong)}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn.danger-ghost{border-color:transparent;background:transparent;color:var(--danger)}
+.btn.danger-ghost:hover{background:var(--danger-soft)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.ghost:hover{background:var(--surface-2);color:var(--text)}
+.btn.sm{min-height:36px;padding:0 12px;font-size:14px}
+.btn[disabled]{opacity:.55;pointer-events:none}
+.icon-btn{
+  display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;
+  border:1px solid var(--border);background:var(--surface);color:var(--muted);flex:none;
+}
+.icon-btn:hover{color:var(--text);background:var(--surface-2)}
+.icon-btn.sm{width:34px;height:34px;border-radius:10px}
+.icon-btn.ok{color:var(--ok)} .icon-btn.ok:hover{background:var(--ok-soft)}
+.icon-btn.danger{color:var(--danger)} .icon-btn.danger:hover{background:var(--danger-soft)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 22px;box-shadow:var(--shadow-sm)}
+.card + .card,.card + .grid-2,.grid-2 + .card,.grid-2 + .grid-2,.banner + .card,.card + .banner{margin-top:18px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.card-head h2,.card-head h3{display:flex;align-items:center;gap:10px}
+.card > h2{margin-bottom:14px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid-2 > .card{margin:0}
+@media (max-width: 900px){ .grid-2{grid-template-columns:1fr} }
+
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font-size:13px;font-weight:600;white-space:nowrap}
+.pill.info{background:var(--info-soft);color:var(--info)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.danger{background:var(--danger-soft);color:var(--danger)}
+.pill.neutral{background:var(--surface-3);color:var(--muted)}
+
+.banner{display:flex;gap:14px;align-items:flex-start;padding:14px 18px;border-radius:var(--r);border:1px solid}
+.banner.warn{background:var(--warn-soft);border-color:color-mix(in srgb, var(--warn) 35%, transparent);color:var(--text)}
+.banner.warn .ic{color:var(--warn);margin-top:2px}
+.banner.danger{background:var(--danger-soft);border-color:color-mix(in srgb, var(--danger) 35%, transparent)}
+.banner.danger .ic{color:var(--danger);margin-top:2px}
+.banner strong{display:block;margin-bottom:2px}
+.banner p{white-space:pre-wrap;color:var(--text)}
+.banner .btn{margin-left:auto;flex:none}
+
+.form-grid{display:grid;grid-template-columns:repeat(2, minmax(0,1fr));gap:14px 18px}
+.form-grid .wide{grid-column:1 / -1}
+@media (max-width: 700px){ .form-grid{grid-template-columns:1fr} }
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field > span{font-size:14px;font-weight:600;color:var(--muted)}
+.field small{color:var(--faint);font-size:13px}
+input[type=text],input[type=search],input[type=tel],input[type=email],input[type=date],input[type=time],input[type=password],input:not([type]),select,textarea{
+  width:100%;min-height:46px;padding:10px 14px;border:1px solid var(--border-strong);border-radius:var(--r-sm);
+  background:var(--surface-2);font-size:16px;color:var(--text);-webkit-appearance:none;appearance:none;
+  transition:border-color .15s, background .15s, box-shadow .15s;
+}
+input[type=date],input[type=time]{display:flex;align-items:center}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50%;background-size:6px 6px;background-repeat:no-repeat;padding-right:38px}
+textarea{min-height:110px;resize:vertical;line-height:1.55}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent)}
+input::placeholder,textarea::placeholder{color:var(--faint)}
+.upper{text-transform:uppercase}
+.hint{font-size:14px;color:var(--muted);margin-top:10px}
+.form-warn{margin-top:12px;padding:10px 14px;border-radius:var(--r-sm);background:var(--warn-soft);color:var(--warn);font-size:14px;font-weight:500}
+.row-end{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:16px}
+
+.seg{display:inline-flex;background:var(--surface-3);border-radius:12px;padding:3px;gap:2px}
+.seg button{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 14px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-weight:500;font-size:15px}
+.seg button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm)}
+.seg.full{display:flex}
+.seg.full button{flex:1;justify-content:center}
+.seg button.on.st-pianificato{color:var(--info)}
+.seg button.on.st-eseguito{color:var(--ok)}
+.seg button.on.st-annullato{color:var(--danger)}
+
+.toggle{display:inline-flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;-webkit-user-select:none;user-select:none}
+.toggle input{position:absolute;opacity:0;pointer-events:none}
+.toggle .track{position:relative;width:46px;height:28px;border-radius:99px;background:var(--border-strong);transition:background .2s;flex:none}
+.toggle .track::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.toggle input:checked + .track{background:var(--accent)}
+.toggle input:checked + .track::after{transform:translateX(18px)}
+.toggle input:focus-visible + .track{outline:3px solid color-mix(in srgb, var(--accent) 55%, transparent);outline-offset:2px}
+.toggle input:disabled + .track{opacity:.5}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin:22px 0 20px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 16px;border:0;background:transparent;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tab.on{color:var(--accent-strong);border-bottom-color:var(--accent)}
+.tab .count{font-size:12px;background:var(--surface-3);border-radius:99px;padding:1px 8px;color:var(--muted)}
+
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:28px 16px;color:var(--muted)}
+.empty .ic{color:var(--faint);margin-bottom:6px}
+.empty strong{color:var(--text);font-weight:600}
+
+.avatar{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;background:var(--accent-soft);color:var(--accent-strong);font-weight:700;font-size:15px;flex:none;letter-spacing:.02em}
+.avatar.lg{width:60px;height:60px;font-size:21px;font-family:var(--font-display)}
+
+/* ==========================================================================
+   5. DASHBOARD & AGENDA
+   ========================================================================== */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;display:flex;gap:14px;align-items:center}
+.stat .ic-wrap{width:44px;height:44px;border-radius:12px;background:var(--accent-soft);color:var(--accent-strong);display:flex;align-items:center;justify-content:center;flex:none}
+.stat strong{display:block;font-family:var(--font-display);font-size:28px;line-height:1.1;font-weight:600}
+.stat span{color:var(--muted);font-size:14px}
+@media (max-width: 1100px){ .stats{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.dash-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:18px;align-items:start}
+.dash-grid .card{margin:0}
+@media (max-width: 1100px){ .dash-grid{grid-template-columns:1fr} }
+
+.appt-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.appt{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface-2);padding:4px 6px 4px 4px}
+.appt-main{flex:1;display:flex;align-items:center;gap:14px;min-width:0;border:0;background:transparent;text-align:left;padding:8px 10px;border-radius:12px}
+.appt-time{display:flex;flex-direction:column;min-width:52px;border-left:3px solid var(--info);padding-left:10px}
+.appt.eseguito .appt-time{border-left-color:var(--ok)}
+.appt.annullato .appt-time{border-left-color:var(--danger)}
+.appt-time strong{font-variant-numeric:tabular-nums;font-size:16px}
+.appt-time small{color:var(--faint);font-variant-numeric:tabular-nums}
+.appt-body{flex:1;display:flex;flex-direction:column;min-width:0}
+.appt-body strong{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.appt-body small{color:var(--muted);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.appt.annullato .appt-body strong{text-decoration:line-through;color:var(--muted)}
+.appt-quick{display:flex;gap:6px}
+
+.chart{width:100%;height:auto;display:block}
+.chart .grid{stroke:var(--border);stroke-width:1}
+.chart .axis{fill:var(--faint);font-size:12px;font-family:var(--font)}
+.chart .axis.today{fill:var(--accent-strong);font-weight:700}
+.chart .val{fill:var(--text);font-size:12px;font-weight:700;font-family:var(--font)}
+.chart .vas-dot{cursor:pointer}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+.mini-list{list-style:none;margin:0;padding:0}
+.mini-list li + li{border-top:1px solid var(--border)}
+.mini-row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 4px;border:0;background:transparent;text-align:left}
+.mini-row .grow{flex:1;min-width:0;display:flex;flex-direction:column}
+.mini-row .grow strong{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-row .grow small{color:var(--muted);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.agenda-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.agenda-bar .range{font-family:var(--font-display);font-size:20px;font-weight:600;margin:0 6px;min-width:220px}
+.week{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+.week-grid{display:grid;grid-template-columns:repeat(7,minmax(128px,1fr));gap:10px;min-width:920px}
+.day{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);display:flex;flex-direction:column;min-height:420px}
+.day.today{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.day.weekend{background:var(--surface-2)}
+.day-head{display:flex;align-items:center;gap:8px;padding:10px 8px 10px 12px;border-bottom:1px solid var(--border)}
+.day-head span{color:var(--muted);font-size:13px;text-transform:capitalize}
+.day-head strong{font-family:var(--font-display);font-size:22px;font-weight:600;line-height:1}
+.day.today .day-head strong{color:var(--accent-strong)}
+.day-head .icon-btn{margin-left:auto}
+.day-body{display:flex;flex-direction:column;gap:6px;padding:8px}
+.day-empty{color:var(--faint);font-size:13px;text-align:center;padding:14px 0}
+.wcard{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:0;border-radius:10px;padding:8px 10px;background:var(--info-soft);border-left:3px solid var(--info)}
+.wcard.eseguito{background:var(--ok-soft);border-left-color:var(--ok)}
+.wcard.annullato{background:var(--surface-3);border-left-color:var(--danger);opacity:.75}
+.wcard.annullato strong{text-decoration:line-through}
+.wcard time{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted)}
+.wcard strong{font-size:14px;font-weight:600;line-height:1.3;word-break:break-word}
+.wcard small{font-size:12px;color:var(--muted)}
+.day-group + .day-group{margin-top:20px}
+.day-group h3{font-size:15px;color:var(--muted);font-weight:600;margin-bottom:10px;text-transform:capitalize}
+.week-summary{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+
+/* ==========================================================================
+   6. PAZIENTI
+   ========================================================================== */
+.split{display:grid;grid-template-columns:340px 1fr;height:100%}
+.pane{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.list-pane{background:var(--surface);border-right:1px solid var(--border);padding:calc(22px + var(--safe-t)) 14px calc(24px + var(--safe-b))}
+.detail-pane{padding:calc(22px + var(--safe-t)) calc(30px + var(--safe-r)) calc(48px + var(--safe-b)) 30px}
+.list-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 14px}
+.search{display:flex;align-items:center;gap:10px;padding:0 14px;border:1px solid var(--border-strong);border-radius:12px;background:var(--surface-2);color:var(--muted);margin-bottom:12px}
+.search:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent)}
+.search input{border:0 !important;background:transparent !important;box-shadow:none !important;padding:10px 0;min-height:46px}
+.list-count{font-size:13px;color:var(--faint);padding:0 6px 8px}
+.patient-list{display:flex;flex-direction:column;gap:2px}
+.p-item{display:flex;align-items:center;gap:12px;width:100%;padding:10px;border:0;border-radius:12px;background:transparent;text-align:left}
+.p-item:hover{background:var(--surface-2)}
+.p-item.active{background:var(--accent-soft)}
+.p-item .grow{flex:1;min-width:0;display:flex;flex-direction:column}
+.p-item .grow strong{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-item .grow small{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-item .flag{width:8px;height:8px;border-radius:50%;background:var(--warn);flex:none}
+.back-btn{display:none}
+@media (max-width: 900px){
+  .split{grid-template-columns:1fr}
+  .split.show-detail .list-pane{display:none}
+  .split:not(.show-detail) .detail-pane{display:none}
+  .back-btn{display:inline-flex}
+  .list-pane{border-right:0}
+  .detail-pane{padding-left:22px;padding-right:calc(22px + var(--safe-r))}
+}
+.p-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.p-head-text{flex:1;min-width:200px}
+.p-head-text h2{font-family:var(--font-display);font-size:28px;font-weight:600}
+.p-head-text p{margin-top:2px}
+.p-head .back-btn{flex-basis:100%;justify-content:flex-start;width:max-content}
+.p-head + .banner{margin-top:18px}
+.detail-empty{height:100%;display:flex;align-items:center;justify-content:center}
+.ana-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ana-grid .card{margin:0}
+.ana-grid .card.warn{border-color:color-mix(in srgb, var(--warn) 45%, var(--border));background:color-mix(in srgb, var(--warn-soft) 55%, var(--surface))}
+.ana-grid .card h3{margin-bottom:4px}
+.ana-grid .card p.muted{font-size:13px;margin-bottom:10px}
+.ana-grid textarea{min-height:130px}
+@media (max-width: 1100px){ .ana-grid{grid-template-columns:1fr} }
+.danger-zone{border-color:color-mix(in srgb, var(--danger) 35%, var(--border))}
+.danger-zone h2{color:var(--danger)}
+.danger-zone p{color:var(--muted);margin-bottom:14px}
+.meta-foot{font-size:13px;color:var(--faint);margin-top:14px}
+
+.consent{display:grid;grid-template-columns:auto 1fr auto;gap:6px 16px;align-items:center;padding:18px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface)}
+.consent + .consent{margin-top:14px}
+.consent-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:var(--warn-soft);color:var(--warn);grid-row:span 2}
+.consent.ok .consent-icon{background:var(--ok-soft);color:var(--ok)}
+.consent-text{display:flex;flex-direction:column;min-width:0}
+.consent-text strong{font-weight:600}
+.consent-text span{font-size:14px;color:var(--muted);word-break:break-word}
+.consent-actions{grid-column:2 / -1;display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+
+.session-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:18px}
+.s-card{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface);overflow:hidden;text-align:left;padding:0}
+.s-card:hover{border-color:var(--border-strong);box-shadow:var(--shadow)}
+.s-card canvas{width:100%;aspect-ratio:16/10;display:block;background:var(--surface-2);border-bottom:1px solid var(--border)}
+.s-card .s-body{padding:14px 16px;display:flex;flex-direction:column;gap:6px;width:100%}
+.s-card .s-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.s-card .s-top strong{font-weight:600}
+.s-card .s-sym{color:var(--muted);font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.s-card .s-tags{display:flex;gap:6px;flex-wrap:wrap}
+.vas-badge{display:inline-flex;align-items:center;justify-content:center;min-width:52px;height:26px;padding:0 8px;border-radius:99px;font-size:13px;font-weight:700;color:#fff;background:var(--c, var(--faint))}
+.vas-badge.none{background:var(--surface-3);color:var(--muted)}
+
+/* ==========================================================================
+   7. SEDUTA E MAPPA DEL DOLORE
+   ========================================================================== */
+.session-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.session-head .title{flex:1;min-width:220px}
+.session-head h1{font-size:27px}
+.save-status{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--muted);min-height:32px}
+.save-status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.save-status.saving::before{background:var(--warn)}
+.save-status.error::before{background:var(--danger)}
+.session-top{display:grid;grid-template-columns:200px 1fr;gap:14px 18px}
+.session-top .vas-field{grid-column:1 / -1}
+@media (max-width: 800px){ .session-top{grid-template-columns:1fr} }
+.vas{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:6px}
+.vas-btn{min-height:44px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted);transition:background .12s,color .12s,transform .08s}
+.vas-btn:hover{border-color:var(--c)}
+.vas-btn.on{background:var(--c);border-color:var(--c);color:#fff;transform:scale(1.04)}
+.vas-meta{display:flex;justify-content:space-between;font-size:13px;color:var(--faint);margin-top:6px}
+.vas-meta strong{color:var(--text);font-weight:600}
+
+.pm-toolbar{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
+.pm-colors{display:flex;gap:8px;flex-wrap:wrap}
+.swatch{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 8px;border-radius:99px;border:1.5px solid var(--border);background:var(--surface-2);font-size:14px;font-weight:600;color:var(--text)}
+.swatch .dot{width:26px;height:26px;border-radius:50%;background:var(--sw);box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
+.swatch.on{border-color:var(--sw);background:color-mix(in srgb, var(--sw) 14%, var(--surface));box-shadow:0 0 0 2px color-mix(in srgb, var(--sw) 35%, transparent)}
+.pm-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.pm-size{display:inline-flex;align-items:center;gap:10px;padding:0 12px;min-height:44px;border-radius:12px;background:var(--surface-3)}
+.pm-size input[type=range]{width:150px;accent-color:var(--accent)}
+.pm-size output{min-width:22px;text-align:right;font-variant-numeric:tabular-nums;font-size:14px;color:var(--muted)}
+.size-dot-box{width:30px;height:30px;display:flex;align-items:center;justify-content:center}
+.size-dot{display:block;border-radius:50%;background:var(--text)}
+.size-dot.eraser{background:transparent;border:2px dashed var(--muted)}
+.pm-actions{display:flex;gap:8px;margin-left:auto}
+.pm-wrap{
+  position:relative;width:100%;aspect-ratio:16 / 10;border-radius:var(--r);overflow:hidden;
+  background:
+    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--body-detail) 55%, transparent) 1px, transparent 1.5px) 0 0 / 22px 22px,
+    var(--surface-2);
+  border:1px solid var(--border);
+}
+.pm-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#pmDraw{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:crosshair}
+.pm-cursor{position:absolute;left:0;top:0;border-radius:50%;border:1.5px solid var(--text);pointer-events:none;opacity:0;transition:opacity .12s;mix-blend-mode:difference}
+.pm-cursor.show{opacity:.8}
+.pm-legend{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:10px}
+
+.tech-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width: 900px){ .tech-grid{grid-template-columns:1fr} }
+.tech-group{border:1px solid var(--border);border-radius:var(--r);padding:14px;background:var(--surface-2)}
+.tech-group h3{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:15px}
+.tech-group h3 span{font-size:12px;font-weight:700;border-radius:99px;padding:1px 9px;background:var(--surface-3);color:var(--muted)}
+.tech-group h3 span.has{background:var(--accent);color:var(--accent-text)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:40px;padding:0 14px;border-radius:99px;border:1px solid var(--border-strong);background:var(--surface);font-size:14px;font-weight:500;color:var(--text)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-text)}
+.linked{display:inline-flex;align-items:center;gap:6px}
+
+/* ==========================================================================
+   8. BACKUP & IMPOSTAZIONI
+   ========================================================================== */
+.file-chip{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface-2);margin-top:14px}
+.file-chip .ic{color:var(--accent)}
+.file-chip div{display:flex;flex-direction:column;min-width:0}
+.file-chip strong{font-weight:600;word-break:break-all}
+.file-chip span{font-size:14px;color:var(--muted)}
+.radio-cards{border:0;padding:0;margin:16px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width: 700px){ .radio-cards{grid-template-columns:1fr} }
+.radio-card{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1.5px solid var(--border);border-radius:var(--r);cursor:pointer;background:var(--surface)}
+.radio-card:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.radio-card input{margin-top:4px;accent-color:var(--accent);width:20px;height:20px;flex:none}
+.radio-card span{display:flex;flex-direction:column}
+.radio-card small{color:var(--muted);font-size:14px}
+.steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px;color:var(--text)}
+.steps li::marker{color:var(--accent);font-weight:700}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.kv div{padding:12px 14px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border)}
+.kv span{display:block;font-size:13px;color:var(--muted)}
+.kv strong{font-size:18px;font-weight:600}
+.version{margin-top:22px;font-size:13px;color:var(--faint)}
+.stack{display:flex;flex-direction:column;gap:4px}
+
+/* ==========================================================================
+   9. MODALI & TOAST
+   ========================================================================== */
+#modal-root{position:relative;z-index:50}
+.modal-backdrop{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:calc(20px + var(--safe-t)) 20px calc(20px + var(--safe-b));background:rgba(8,22,18,.4);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);opacity:0;transition:opacity .18s}
+.modal-backdrop.show{opacity:1}
+.modal{width:min(600px,100%);max-height:100%;display:flex;flex-direction:column;background:var(--surface);border-radius:22px;box-shadow:var(--shadow-lg);transform:translateY(10px) scale(.99);transition:transform .2s}
+.modal-backdrop.show .modal{transform:none}
+.modal.sm{width:min(440px,100%)}
+.modal.xl{width:min(1100px,100%);height:100%}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 18px 12px 24px}
+.modal-head h3{font-family:var(--font-display);font-size:22px;font-weight:600}
+.modal-body{padding:6px 24px 20px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+.modal.xl .modal-body{display:flex;flex-direction:column;gap:12px}
+.modal-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 18px 18px 24px;border-top:1px solid var(--border)}
+.confirm-text{font-size:16px;line-height:1.55;white-space:pre-line}
+.pdf-frame{flex:1;min-height:320px;border-radius:var(--r);overflow:hidden;border:1px solid var(--border);background:var(--surface-2)}
+.pdf-frame iframe{width:100%;height:100%;border:0;display:block}
+#toast-root{position:fixed;left:50%;bottom:calc(22px + var(--safe-b));transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:min(560px,calc(100% - 32px))}
+.toast{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:14px;background:var(--text);color:var(--bg);box-shadow:var(--shadow-lg);font-size:15px;font-weight:500;opacity:0;transform:translateY(10px);transition:opacity .2s,transform .2s}
+.toast.show{opacity:1;transform:none}
+.toast.error .ic{color:#ff9b94}
+.toast.ok .ic{color:#8fe0b0}
+.fatal{max-width:560px;margin:15vh auto;padding:28px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg)}
+.fatal h1{margin-bottom:10px}
+
+/* ==========================================================================
+   BLOCCO CON PASSWORD
+   ========================================================================== */
+.lock-screen{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;
+  padding:calc(24px + var(--safe-t)) 24px calc(24px + var(--safe-b));background:var(--bg);overflow:auto}
+.lock-card{width:min(420px,100%);display:flex;flex-direction:column;align-items:stretch;gap:14px;text-align:center;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:32px 28px;box-shadow:var(--shadow)}
+.lock-card h1{font-family:var(--font-display);font-weight:600;font-size:1.7rem;margin:4px 0 0}
+.lock-card p{margin:0}
+.lock-icon{align-self:center;width:84px;height:84px;border-radius:50%;display:grid;place-items:center;
+  background:var(--accent-soft);color:var(--accent)}
+.lock-card input[type=password]{font-size:1.15rem;padding:14px 16px;border-radius:var(--r);border:1px solid var(--border-strong);
+  background:var(--surface-2);color:var(--text);text-align:center;letter-spacing:.08em}
+.lock-card input[type=password]:focus{outline:3px solid var(--accent-soft);border-color:var(--accent)}
+.lock-card .btn{justify-content:center;min-height:50px;font-size:1.05rem}
+.lock-msg{min-height:1.3em;color:var(--danger);font-size:.95rem;margin:0}
+.lock-msg.info{color:var(--muted)}
+.lock-link{background:none;border:0;color:var(--accent);font:inherit;font-size:.92rem;padding:8px;cursor:pointer}
+.lock-card.shake{animation:lockShake .38s ease}
+@keyframes lockShake{20%,60%{transform:translateX(-9px)}40%,80%{transform:translateX(9px)}}
+.sec-card > p, .sec-card > .field{margin:0 0 12px}
+.sec-status{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-weight:600;font-size:.85rem;
+  background:var(--ok-soft);color:var(--ok)}
+.sec-status.off{background:var(--warn-soft);color:var(--warn)}
+/* Copertura dell'anteprima nel multitasking */
+html.privacy #app, html.privacy #modal-root, html.privacy #toast-root{visibility:hidden !important}
+html.privacy body{background:var(--bg)}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="sidebar" id="sidebar" aria-label="Navigazione principale"></aside>
+  <main class="main" id="main" tabindex="-1"></main>
+</div>
+<div id="modal-root"></div>
+<div id="toast-root" aria-live="polite"></div>
+<input type="file" id="pdfInput" accept="application/pdf,.pdf" hidden>
+<input type="file" id="importInput" accept="application/json,.json,text/plain" hidden>
+
+<script>
+'use strict';
+
+/* ==========================================================================
+   1. COSTANTI E CONFIGURAZIONE
+   ========================================================================== */
+const APP = Object.freeze({
+  name: 'OsteoStudio',
+  version: '1.0.0',
+  dbName: 'osteostudio-db',
+  dbVersion: 1,
+  backupFormat: 'osteostudio-backup',
+  backupVersion: 1
+});
+
+const PM_W = 1600;               // risoluzione interna fissa della mappa del dolore
+const PM_H = 1000;
+const MAX_PDF_BYTES = 40 * 1024 * 1024;
+const UNDO_LIMIT = 12;
+const PBKDF2_ITERATIONS = 310000;
+
+const PAIN_COLORS = Object.freeze([
+  { id: 'acuto',       label: 'Acuto',       color: '#e5484d' },
+  { id: 'cronico',     label: 'Cronico',     color: '#3b7ff0' },
+  { id: 'neuro',       label: 'Neurologico', color: '#e9b106' },
+  { id: 'subacuto',    label: 'Subacuto',    color: '#f27a1a' },
+  { id: 'irradiato',   label: 'Irradiato',   color: '#9d5cf0' },
+  { id: 'parestesia',  label: 'Parestesia',  color: '#12a37f' }
+]);
+
+const TECHNIQUES = Object.freeze({
+  strutturali: {
+    label: 'Strutturali',
+    items: ['HVLA / Thrust', 'Muscle Energy (MET)', 'Tecniche articolatorie', 'Strain-Counterstrain', 'Trazioni e decoaptazioni', 'Inibizione muscolare']
+  },
+  craniosacrali: {
+    label: 'Cranio-Sacrali',
+    items: ['Compressione CV4', 'Rilascio SSB', 'Tecniche suturali', 'Membrane a tensione reciproca', 'Lift frontale / parietale', 'Tecniche sacrali']
+  },
+  viscerali: {
+    label: 'Viscerali',
+    items: ['Diaframma toraco-addominale', 'Fegato e vie biliari', 'Stomaco e cardias', 'Radice del mesentere', 'Colon e valvola ileo-cecale', 'Sfera pelvica']
+  },
+  fasciali: {
+    label: 'Fasciali',
+    items: ['Rilascio miofasciale', 'BLT / LAT', 'Unwinding fasciale', 'Diaframmi trasversali', 'Fascia toraco-lombare', 'Recoil fasciale']
+  }
+});
+
+const APPT_STATUS = Object.freeze({
+  pianificato: { label: 'Pianificato', cls: 'info' },
+  eseguito:    { label: 'Eseguito',    cls: 'ok' },
+  annullato:   { label: 'Annullato',   cls: 'danger' }
+});
+
+const APPT_TYPES = Object.freeze(['Prima visita', 'Trattamento', 'Controllo', 'Follow-up telefonico']);
+
+const CONSENTS = Object.freeze({
+  informato: { label: 'Consenso informato al trattamento', short: 'Consenso informato' },
+  privacy:   { label: 'Informativa e consenso al trattamento dei dati (GDPR)', short: 'Privacy / GDPR' }
+});
+
+const PATIENT_FIELDS = Object.freeze([
+  { k: 'nome',          label: 'Nome',             type: 'text' },
+  { k: 'cognome',       label: 'Cognome',          type: 'text' },
+  { k: 'dataNascita',   label: 'Data di nascita',  type: 'date' },
+  { k: 'luogoNascita',  label: 'Luogo di nascita', type: 'text' },
+  { k: 'sesso',         label: 'Sesso',            type: 'select', options: [['', '—'], ['F', 'Femmina'], ['M', 'Maschio'], ['X', 'Altro / non specificato']] },
+  { k: 'codiceFiscale', label: 'Codice fiscale',   type: 'text', upper: true },
+  { k: 'telefono',      label: 'Telefono',         type: 'tel' },
+  { k: 'email',         label: 'Email',            type: 'email' },
+  { k: 'indirizzo',     label: 'Indirizzo',        type: 'text', wide: true },
+  { k: 'professione',   label: 'Professione',      type: 'text' },
+  { k: 'medicoCurante', label: 'Medico curante',   type: 'text' },
+  { k: 'inviatoDa',     label: 'Inviato da',       type: 'text' },
+  { k: 'noteAnagrafica',label: 'Note',             type: 'textarea', wide: true }
+]);
+
+const ANAMNESI_FIELDS = Object.freeze([
+  { k: 'remota',            label: 'Anamnesi remota',              hint: 'Patologie pregresse, malattie dell’infanzia, familiarità.' },
+  { k: 'prossima',          label: 'Anamnesi prossima',            hint: 'Motivo della consultazione, esordio, evoluzione, fattori aggravanti e allevianti.' },
+  { k: 'stileVita',         label: 'Stile di vita',                hint: 'Lavoro, sport, sonno, alimentazione, stress, posture abituali.' },
+  { k: 'interventi',        label: 'Interventi chirurgici',        hint: 'Tipo di intervento, anno, esiti, cicatrici.' },
+  { k: 'traumi',            label: 'Traumi e incidenti',           hint: 'Fratture, distorsioni, colpi di frusta, cadute.' },
+  { k: 'farmaci',           label: 'Terapie in corso',             hint: 'Farmaci, dosaggi e motivo della terapia.' },
+  { k: 'controindicazioni', label: 'Controindicazioni e red flags', hint: 'Anticoagulanti, osteoporosi, gravidanza, neoplasie, protesi. Compare in evidenza in ogni seduta.', warn: true }
+]);
+
+const DEFAULT_SETTINGS = Object.freeze({
+  studioName: 'Studio Osteopatico',
+  therapistName: '',
+  theme: 'auto',
+  defaultDuration: 60,
+  dayStart: '09:00',
+  onlyPencil: true,
+  pressure: true,
+  brushSize: 12,
+  lastBackupAt: null
+});
+
+/* ==========================================================================
+   2. ICONE SVG INCORPORATE
+   ========================================================================== */
+const ICONS = Object.freeze({
+  home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/>',
+  calendar: '<rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-6 6.5-6s5.9 2.4 6.5 6"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.4c1.6.9 2.7 2.8 3 5.6"/>',
+  drive: '<ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+  settings: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  chevL: '<path d="m15 18-6-6 6-6"/>',
+  chevR: '<path d="m9 18 6-6-6-6"/>',
+  trash: '<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/><path d="M10 11v5M14 11v5"/>',
+  file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+  eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  upload: '<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
+  download: '<path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
+  share: '<path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 10H5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-1"/>',
+  pen: '<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"/><path d="m14.5 5.5 3 3"/>',
+  eraser: '<path d="M7 20.5 3.5 17a2 2 0 0 1 0-2.8l9.7-9.7a2 2 0 0 1 2.8 0l4.5 4.5a2 2 0 0 1 0 2.8L12 20.5z"/><path d="M7 20.5h13M8.5 9.5l6 6"/>',
+  undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7"/>',
+  moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  auto: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>',
+  alert: '<path d="M12 3.5 2.5 20h19z"/><path d="M12 10v4.5M12 17.5h.01"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  activity: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
+  clipboard: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2.8h6V4M9 10h6M9 14h6M9 18h4"/>',
+  lock: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>'
+});
+
+function ic(name, size = 20) {
+  return `<svg class="ic" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+}
+
+const LOGO_SVG = `<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" style="fill:var(--accent)"/><g style="fill:var(--accent-text)"><rect x="13" y="7" width="14" height="4.2" rx="2.1"/><rect x="12" y="13.2" width="16" height="4.2" rx="2.1"/><rect x="11.5" y="19.4" width="17" height="4.2" rx="2.1"/><rect x="12.3" y="25.6" width="15.4" height="4.2" rx="2.1"/><path d="M15 31.8h10l-5 3.6z"/></g></svg>`;
+
+/* ==========================================================================
+   3. UTILITY
+   ========================================================================== */
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function uid() {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  } catch (e) { /* contesto non sicuro: si usa il fallback */ }
+  const rnd = new Uint8Array(12);
+  crypto.getRandomValues(rnd);
+  return 'id-' + Date.now().toString(36) + '-' + Array.from(rnd, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+const norm = (s) => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+const pad = (n) => String(n).padStart(2, '0');
+const nowISO = () => new Date().toISOString();
+const toISODate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseISODate = (s) => { const [y, m, d] = String(s).split('-').map(Number); return new Date(y, (m || 1) - 1, d || 1); };
+const addDays = (d, n) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() + n); return x; };
+const startOfWeek = (d) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+const todayISO = () => toISODate(new Date());
+const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
+const DF = {
+  long:   new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+  medium: new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }),
+  short:  new Intl.DateTimeFormat('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+  dm:     new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short' }),
+  dmw:    new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric', month: 'long' }),
+  wd:     new Intl.DateTimeFormat('it-IT', { weekday: 'short' }),
+  time:   new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-digit' })
+};
+
+function fmtDate(value, style = 'medium') {
+  if (!value) return '—';
+  const d = value instanceof Date ? value : (String(value).length === 10 ? parseISODate(value) : new Date(value));
+  if (Number.isNaN(d.getTime())) return '—';
+  return DF[style].format(d);
+}
+
+function fmtDateTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return `${DF.short.format(d)} alle ${DF.time.format(d)}`;
+}
+
+function toMinutes(time) { const [h, m] = String(time || '0:0').split(':').map(Number); return (h || 0) * 60 + (m || 0); }
+function fromMinutes(t) { const v = ((t % 1440) + 1440) % 1440; return `${pad(Math.floor(v / 60))}:${pad(v % 60)}`; }
+function addMinutes(time, min) { return fromMinutes(toMinutes(time) + Number(min || 0)); }
+
+function ageOf(iso) {
+  if (!iso) return null;
+  const b = parseISODate(iso);
+  if (Number.isNaN(b.getTime())) return null;
+  const n = new Date();
+  let a = n.getFullYear() - b.getFullYear();
+  if (n.getMonth() < b.getMonth() || (n.getMonth() === b.getMonth() && n.getDate() < b.getDate())) a--;
+  return a >= 0 && a < 130 ? a : null;
+}
+
+function fmtBytes(n) {
+  const v = Number(n) || 0;
+  if (v < 1024) return `${v} B`;
+  if (v < 1048576) return `${(v / 1024).toFixed(1).replace('.', ',')} KB`;
+  if (v < 1073741824) return `${(v / 1048576).toFixed(1).replace('.', ',')} MB`;
+  return `${(v / 1073741824).toFixed(2).replace('.', ',')} GB`;
+}
+
+const fullName = (p) => (p ? `${p.cognome || ''} ${p.nome || ''}`.trim() || 'Senza nome' : 'Paziente eliminato');
+const initials = (p) => ((p?.nome || '').charAt(0) + (p?.cognome || '').charAt(0)).toUpperCase() || '?';
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+function vasColor(v) { return `hsl(${Math.round(140 - v * 14)} 62% 44%)`; }
+function vasLabel(v) {
+  if (v === null || v === undefined || v === '') return 'Non rilevato';
+  if (v === 0) return 'Nessun dolore';
+  if (v <= 3) return 'Lieve';
+  if (v <= 6) return 'Moderato';
+  if (v <= 9) return 'Severo';
+  return 'Massimo immaginabile';
+}
+
+function readAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(r.error || new Error('Lettura del file non riuscita.'));
+    r.readAsDataURL(file);
+  });
+}
+
+function readAsText(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(r.error || new Error('Lettura del file non riuscita.'));
+    r.readAsText(file);
+  });
+}
+
+function bytesToB64(bytes) {
+  let s = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) s += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+  return btoa(s);
+}
+
+function b64ToBytes(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function dataUrlToBlob(dataUrl) {
+  const i = dataUrl.indexOf(',');
+  const head = dataUrl.slice(0, i);
+  const mime = (head.match(/^data:([^;,]+)/) || [])[1] || 'application/octet-stream';
+  return new Blob([b64ToBytes(dataUrl.slice(i + 1))], { type: mime });
+}
+
+function themeColor(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+/* ==========================================================================
+   4. DATABASE LOCALE (IndexedDB)
+   ========================================================================== */
+const DB = {
+  db: null,
+
+  open() {
+    return new Promise((resolve, reject) => {
+      if (!('indexedDB' in window) || !window.indexedDB) {
+        reject(new Error('IndexedDB non è disponibile in questo browser o contesto.'));
+        return;
+      }
+      let req;
+      try { req = indexedDB.open(APP.dbName, APP.dbVersion); }
+      catch (err) { reject(err); return; }
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        const ensure = (name, keyPath, indexes = []) => {
+          const store = db.objectStoreNames.contains(name) ? req.transaction.objectStore(name) : db.createObjectStore(name, { keyPath });
+          indexes.forEach((ix) => { if (!store.indexNames.contains(ix)) store.createIndex(ix, ix, { unique: false }); });
+        };
+        ensure('patients', 'id');
+        ensure('sessions', 'id', ['patientId']);
+        ensure('appointments', 'id', ['patientId', 'date']);
+        ensure('files', 'id', ['patientId']);
+        ensure('settings', 'key');
+      };
+      req.onsuccess = () => {
+        this.db = req.result;
+        this.db.onversionchange = () => { this.db.close(); location.reload(); };
+        resolve(this.db);
+      };
+      req.onerror = () => reject(req.error || new Error('Impossibile aprire il database locale.'));
+      req.onblocked = () => reject(new Error('Il database è bloccato da un’altra finestra di OsteoStudio. Chiudila e ricarica.'));
+    });
+  },
+
+  _done(tx) {
+    return new Promise((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error || new Error('Errore di scrittura nel database.'));
+      tx.onabort = () => reject(tx.error || new Error('Scrittura annullata (spazio esaurito?).'));
+    });
+  },
+
+  _req(r) {
+    return new Promise((resolve, reject) => {
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+    });
+  },
+
+  /* --- Cifratura trasparente -------------------------------------------------
+     Quando il blocco con password è attivo (DB.key impostata), ogni record viene
+     salvato come { id, patientId?, __enc, iv, ct }: il contenuto è cifrato con
+     AES-256-GCM; restano in chiaro solo l'identificativo casuale e il riferimento
+     al paziente, necessari agli indici del database. */
+  key: null,
+  _indexFields: { sessions: ['patientId'], appointments: ['patientId'], files: ['patientId'] },
+  _keyPath(store) { return store === 'settings' ? 'key' : 'id'; },
+
+  async _enc(store, value) {
+    if (!this.key || !value || (store === 'settings' && value.key === 'lock')) return value;
+    const kp = this._keyPath(store);
+    const box = await Lock.encryptWith(this.key, JSON.stringify(value));
+    const rec = { [kp]: value[kp], __enc: 1, iv: box.iv, ct: box.ct };
+    (this._indexFields[store] || []).forEach((f) => { if (value[f] != null) rec[f] = value[f]; });
+    return rec;
+  },
+
+  async _dec(rec) {
+    if (!rec || !rec.__enc) return rec;
+    if (!this.key) throw new Error('Archivio bloccato: inserisci la password.');
+    return JSON.parse(await Lock.decryptWith(this.key, rec));
+  },
+
+  rawGet(store, key) { return this._req(this.db.transaction(store, 'readonly').objectStore(store).get(key)); },
+
+  async rawPut(store, value) {
+    const tx = this.db.transaction(store, 'readwrite');
+    tx.objectStore(store).put(value);
+    await this._done(tx);
+  },
+
+  async getAll(store) {
+    const raw = await this._req(this.db.transaction(store, 'readonly').objectStore(store).getAll());
+    const visible = store === 'settings' ? raw.filter((r) => r.key !== 'lock') : raw;
+    return Promise.all(visible.map((r) => this._dec(r)));
+  },
+
+  async get(store, key) { return this._dec(await this.rawGet(store, key)); },
+
+  async put(store, value) {
+    const rec = await this._enc(store, value);        // cifra PRIMA di aprire la transazione
+    const tx = this.db.transaction(store, 'readwrite');
+    tx.objectStore(store).put(rec);
+    await this._done(tx);
+    return value;
+  },
+
+  async putMany(store, values) {
+    if (!values || !values.length) return;
+    const recs = await Promise.all(values.map((v) => this._enc(store, v)));
+    const tx = this.db.transaction(store, 'readwrite');
+    const os = tx.objectStore(store);
+    recs.forEach((r) => os.put(r));
+    await this._done(tx);
+  },
+
+  async delete(store, key) {
+    const tx = this.db.transaction(store, 'readwrite');
+    tx.objectStore(store).delete(key);
+    await this._done(tx);
+  },
+
+  async deleteMany(store, keys) {
+    if (!keys || !keys.length) return;
+    const tx = this.db.transaction(store, 'readwrite');
+    const os = tx.objectStore(store);
+    keys.forEach((k) => os.delete(k));
+    await this._done(tx);
+  },
+
+  async deleteByIndex(store, index, value) {
+    const tx = this.db.transaction(store, 'readwrite');
+    const os = tx.objectStore(store);
+    const req = os.index(index).openKeyCursor(IDBKeyRange.only(value));
+    req.onsuccess = () => {
+      const cursor = req.result;
+      if (cursor) { os.delete(cursor.primaryKey); cursor.continue(); }
+    };
+    await this._done(tx);
+  },
+
+  async replaceAll(data) {
+    const stores = ['patients', 'sessions', 'appointments', 'files'];
+    const enc = {};
+    for (const n of stores) enc[n] = await Promise.all((data[n] || []).map((v) => this._enc(n, v)));
+    const appRec = await this._enc('settings', { key: 'app', value: { ...DEFAULT_SETTINGS, ...(data.settings || {}) } });
+    const tx = this.db.transaction([...stores, 'settings'], 'readwrite');
+    stores.forEach((n) => { const os = tx.objectStore(n); os.clear(); enc[n].forEach((r) => os.put(r)); });
+    tx.objectStore('settings').put(appRec);             // la configurazione del blocco resta intatta
+    await this._done(tx);
+  },
+
+  /** Riscrive l'intero archivio con una nuova chiave (null = senza cifratura) in un'unica transazione. */
+  async rekey(newKey, lockConfig) {
+    const stores = ['patients', 'sessions', 'appointments', 'files'];
+    const plain = {};
+    for (const n of stores) plain[n] = await this.getAll(n);
+    const app = await this.get('settings', 'app');
+    const previous = this.key;
+    this.key = newKey;
+    try {
+      const enc = {};
+      for (const n of stores) enc[n] = await Promise.all(plain[n].map((v) => this._enc(n, v)));
+      const appRec = app ? await this._enc('settings', app) : null;
+      const tx = this.db.transaction([...stores, 'settings'], 'readwrite');
+      stores.forEach((n) => { const os = tx.objectStore(n); os.clear(); enc[n].forEach((r) => os.put(r)); });
+      const st = tx.objectStore('settings');
+      if (appRec) st.put(appRec);
+      if (lockConfig) st.put(lockConfig); else st.delete('lock');
+      await this._done(tx);
+    } catch (err) {
+      this.key = previous;
+      throw err;
+    }
+  },
+
+  /** Svuota completamente l'archivio, configurazione del blocco compresa. */
+  async nuke() {
+    const names = ['patients', 'sessions', 'appointments', 'files', 'settings'];
+    const tx = this.db.transaction(names, 'readwrite');
+    names.forEach((n) => tx.objectStore(n).clear());
+    await this._done(tx);
+  }
+};
+
+/* ==========================================================================
+   5. CRITTOGRAFIA BACKUP (Web Crypto: PBKDF2-SHA256 + AES-256-GCM)
+   ========================================================================== */
+const Vault = {
+  available() {
+    return !!(window.crypto && window.crypto.subtle && typeof window.crypto.subtle.deriveKey === 'function');
+  },
+
+  async deriveKey(password, salt, iterations) {
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+      base,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt', 'decrypt']
+    );
+  },
+
+  async encrypt(plainText, password) {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await this.deriveKey(password, salt, PBKDF2_ITERATIONS);
+    const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv, tagLength: 128 }, key, new TextEncoder().encode(plainText));
+    return {
+      kdf: { name: 'PBKDF2', hash: 'SHA-256', iterations: PBKDF2_ITERATIONS, salt: bytesToB64(salt) },
+      cipher: { name: 'AES-GCM', keyLength: 256, tagLength: 128, iv: bytesToB64(iv) },
+      data: bytesToB64(new Uint8Array(cipher))
+    };
+  },
+
+  async decrypt(envelope, password) {
+    const salt = b64ToBytes(envelope.kdf.salt);
+    const iv = b64ToBytes(envelope.cipher.iv);
+    const key = await this.deriveKey(password, salt, Number(envelope.kdf.iterations) || PBKDF2_ITERATIONS);
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv, tagLength: 128 }, key, b64ToBytes(envelope.data));
+    return new TextDecoder().decode(plain);
+  }
+};
+
+/* ==========================================================================
+   5b. BLOCCO CON PASSWORD E CIFRATURA DELL'ARCHIVIO LOCALE
+   ========================================================================== */
+const LOCK_VERIFIER = 'osteostudio-lock-ok';
+
+const Lock = {
+  config: null,
+  hiddenAt: 0,
+  lastActivity: Date.now(),
+  locking: false,
+
+  get enabled() { return !!this.config; },
+  get autoLockMin() { return Number(this.config?.autoLockMin) || 5; },
+
+  async loadConfig() { this.config = (await DB.rawGet('settings', 'lock')) || null; },
+
+  async encryptWith(key, text) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv, tagLength: 128 }, key, new TextEncoder().encode(text));
+    return { iv, ct };
+  },
+
+  async decryptWith(key, box) {
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: box.iv, tagLength: 128 }, key, box.ct);
+    return new TextDecoder().decode(plain);
+  },
+
+  async makeConfig(password) {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const key = await Vault.deriveKey(password, salt, PBKDF2_ITERATIONS);
+    const verifier = await this.encryptWith(key, LOCK_VERIFIER);
+    return {
+      key,
+      config: { key: 'lock', v: 1, salt: bytesToB64(salt), iterations: PBKDF2_ITERATIONS, verifier,
+                autoLockMin: this.config?.autoLockMin || 5, createdAt: nowISO() }
+    };
+  },
+
+  /** Restituisce la chiave se la password è corretta, altrimenti null. */
+  async keyFor(password, config = this.config) {
+    if (!config) return null;
+    try {
+      const key = await Vault.deriveKey(password, b64ToBytes(config.salt), Number(config.iterations) || PBKDF2_ITERATIONS);
+      return (await this.decryptWith(key, config.verifier)) === LOCK_VERIFIER ? key : null;
+    } catch (e) { return null; }
+  },
+
+  async enable(password) {
+    const { key, config } = await this.makeConfig(password);
+    await DB.rekey(key, config);
+    this.config = config;
+  },
+
+  async change(oldPassword, newPassword) {
+    if (!(await this.keyFor(oldPassword))) throw new Error('La password attuale non è corretta.');
+    const { key, config } = await this.makeConfig(newPassword);
+    await DB.rekey(key, config);
+    this.config = config;
+  },
+
+  async disable(password) {
+    if (!(await this.keyFor(password))) throw new Error('La password non è corretta.');
+    await DB.rekey(null, null);
+    this.config = null;
+  },
+
+  async setAutoLock(minutes) {
+    if (!this.config) return;
+    this.config = { ...this.config, autoLockMin: minutes };
+    await DB.rawPut('settings', this.config);
+  },
+
+  failures() { try { return JSON.parse(localStorage.getItem('osteostudio.lock') || '{}') || {}; } catch (e) { return {}; } },
+  setFailures(value) { try { localStorage.setItem('osteostudio.lock', JSON.stringify(value)); } catch (e) { /* facoltativo */ } },
+
+  /** Blocca subito: salva, cancella la chiave dalla memoria ricaricando la pagina. */
+  lockNow() {
+    if (!this.enabled || this.locking) return;
+    this.locking = true;
+    document.documentElement.classList.add('privacy');
+    Promise.resolve(Saver.flush()).catch(() => {}).finally(() => location.reload());
+  },
+
+  bindAutoLock() {
+    const mark = () => { this.lastActivity = Date.now(); };
+    ['pointerdown', 'keydown', 'input', 'wheel', 'touchstart'].forEach((t) =>
+      document.addEventListener(t, mark, { passive: true, capture: true }));
+    document.addEventListener('visibilitychange', () => {
+      if (!this.enabled) return;
+      if (document.visibilityState === 'hidden') {
+        this.hiddenAt = Date.now();
+        document.documentElement.classList.add('privacy');
+      } else {
+        if (this.hiddenAt && Date.now() - this.hiddenAt >= this.autoLockMin * 60000) { this.lockNow(); return; }
+        this.hiddenAt = 0;
+        this.lastActivity = Date.now();
+        document.documentElement.classList.remove('privacy');
+      }
+    });
+    window.addEventListener('pageshow', (e) => { if (e.persisted && this.enabled) this.lockNow(); });
+    setInterval(() => {
+      if (this.enabled && document.visibilityState === 'visible' &&
+          Date.now() - this.lastActivity >= this.autoLockMin * 60000) this.lockNow();
+    }, 15000);
+    document.addEventListener('change', (e) => {
+      if (e.target && e.target.id === 'autoLockSel') {
+        this.setAutoLock(Number(e.target.value))
+          .then(() => toast('Blocco automatico aggiornato', 'ok'))
+          .catch((err) => toast(err?.message || 'Impostazione non salvata', 'error'));
+      }
+    });
+  }
+};
+
+/** Schermata di sblocco: si risolve quando la password è corretta. */
+const LockScreen = {
+  show() {
+    return new Promise((resolve) => {
+      const el = document.createElement('div');
+      el.className = 'lock-screen';
+      el.id = 'lock-screen';
+      el.innerHTML = `
+        <form class="lock-card" autocomplete="off" novalidate>
+          <div class="lock-icon">${ic('lock', 36)}</div>
+          <h1>OsteoStudio è bloccato</h1>
+          <p class="muted">L’archivio dei pazienti è cifrato. Inserisci la password per aprirlo.</p>
+          <input type="password" id="lockPw" placeholder="Password" autocomplete="off" autocapitalize="off"
+                 autocorrect="off" spellcheck="false" enterkeyhint="go" aria-label="Password">
+          <p class="lock-msg" id="lockMsg" role="alert"></p>
+          <button type="submit" class="btn primary" id="lockBtn">Sblocca</button>
+          <button type="button" class="lock-link" id="lockForgot">Password dimenticata?</button>
+        </form>`;
+      document.body.appendChild(el);
+      const form = el.querySelector('form');
+      const pw = el.querySelector('#lockPw');
+      const msg = el.querySelector('#lockMsg');
+      const btn = el.querySelector('#lockBtn');
+      let busy = false;
+
+      const tick = () => {
+        const wait = Math.max(0, (Lock.failures().until || 0) - Date.now());
+        if (wait > 0) {
+          msg.textContent = `Troppi tentativi errati. Riprova tra ${Math.ceil(wait / 1000)} secondi.`;
+          btn.disabled = true;
+          pw.disabled = true;
+        } else if (pw.disabled && !busy) {
+          btn.disabled = false;
+          pw.disabled = false;
+          msg.textContent = '';
+          pw.focus();
+        }
+      };
+      const timer = setInterval(tick, 1000);
+      tick();
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (busy || !pw.value) return;
+        if ((Lock.failures().until || 0) > Date.now()) return;
+        busy = true;
+        btn.disabled = true;
+        btn.textContent = 'Verifica…';
+        const key = await Lock.keyFor(pw.value);
+        busy = false;
+        btn.textContent = 'Sblocca';
+        if (key) {
+          Lock.setFailures({});
+          DB.key = key;
+          clearInterval(timer);
+          el.remove();
+          resolve();
+          return;
+        }
+        const n = (Lock.failures().n || 0) + 1;
+        const until = n >= 5 ? Date.now() + Math.min(900, 30 * 2 ** (n - 5)) * 1000 : 0;
+        Lock.setFailures({ n, until });
+        pw.value = '';
+        btn.disabled = false;
+        msg.textContent = n >= 3 ? `Password errata (${n} tentativi).` : 'Password errata.';
+        const card = el.querySelector('.lock-card');
+        card.classList.remove('shake');
+        void card.offsetWidth;
+        card.classList.add('shake');
+        tick();
+        if (!pw.disabled) pw.focus();
+      });
+
+      el.querySelector('#lockForgot').addEventListener('click', async () => {
+        const first = await confirmDialog(
+          'La password non può essere recuperata: l’archivio è cifrato e senza password resta illeggibile, per chiunque. ' +
+          'Puoi cancellare l’archivio di questo iPad e ripristinare l’ultimo backup esportato sul disco SanDisk (servirà la password del backup).',
+          { title: 'Password dimenticata', ok: 'Cancella e ripristina da backup', danger: true });
+        if (!first) return;
+        const second = await confirmDialog('Conferma definitiva: tutti i dati presenti su questo iPad verranno eliminati.',
+          { title: 'Ultima conferma', ok: 'Cancella tutto', danger: true });
+        if (!second) return;
+        await DB.nuke();
+        Lock.setFailures({});
+        location.reload();
+      });
+
+      setTimeout(() => { if (!pw.disabled) pw.focus(); }, 80);
+    });
+  }
+};
+
+/* ==========================================================================
+   6. STATO APPLICATIVO
+   ========================================================================== */
+const S = {
+  patients: new Map(),
+  sessions: new Map(),
+  appointments: new Map(),
+  settings: { ...DEFAULT_SETTINGS },
+  view: 'dashboard',
+  patientId: null,
+  patientTab: 'anagrafica',
+  sessionId: null,
+  weekStart: startOfWeek(new Date()),
+  agendaMode: 'week',
+  search: '',
+  pdfTarget: null,
+  exportReady: null,
+  pendingImport: null,
+  pm: { color: PAIN_COLORS[0].color, tool: 'pen', size: DEFAULT_SETTINGS.brushSize }
+};
+
+function emptyAnamnesi() { return ANAMNESI_FIELDS.reduce((o, f) => { o[f.k] = ''; return o; }, {}); }
+function emptyTechniques() { return Object.keys(TECHNIQUES).reduce((o, k) => { o[k] = []; return o; }, {}); }
+
+function normalizePatient(p) {
+  const base = PATIENT_FIELDS.reduce((o, f) => { o[f.k] = ''; return o; }, {});
+  return {
+    ...base,
+    ...p,
+    anamnesi: { ...emptyAnamnesi(), ...(p.anamnesi || {}) },
+    consensi: { informato: null, privacy: null, ...(p.consensi || {}) },
+    createdAt: p.createdAt || nowISO(),
+    updatedAt: p.updatedAt || nowISO()
+  };
+}
+
+function normalizeSession(s) {
+  const tech = emptyTechniques();
+  Object.keys(tech).forEach((k) => { if (Array.isArray(s.tecniche?.[k])) tech[k] = s.tecniche[k].slice(); });
+  return {
+    date: todayISO(), sintomo: '', vas: null, palpatoria: '', test: '', tecnicheNote: '',
+    esito: '', indicazioni: '', painMap: '', appointmentId: null,
+    ...s,
+    vas: Number.isFinite(s.vas) ? s.vas : null,
+    tecniche: tech,
+    createdAt: s.createdAt || nowISO(),
+    updatedAt: s.updatedAt || nowISO()
+  };
+}
+
+function normalizeAppointment(a) {
+  return {
+    time: '09:00', duration: 60, type: 'Trattamento', status: 'pianificato', note: '',
+    ...a,
+    status: APPT_STATUS[a.status] ? a.status : 'pianificato',
+    createdAt: a.createdAt || nowISO(),
+    updatedAt: a.updatedAt || nowISO()
+  };
+}
+
+function stamp(obj) { obj.updatedAt = nowISO(); return obj; }
+
+async function loadAll() {
+  const [patients, sessions, appointments, settingsRec] = await Promise.all([
+    DB.getAll('patients'), DB.getAll('sessions'), DB.getAll('appointments'), DB.get('settings', 'app')
+  ]);
+  S.patients = new Map(patients.map((p) => [p.id, normalizePatient(p)]));
+  S.sessions = new Map(sessions.map((s) => [s.id, normalizeSession(s)]));
+  S.appointments = new Map(appointments.map((a) => [a.id, normalizeAppointment(a)]));
+  S.settings = { ...DEFAULT_SETTINGS, ...(settingsRec?.value || {}) };
+  S.pm.size = Number(S.settings.brushSize) || DEFAULT_SETTINGS.brushSize;
+}
+
+function saveSettings() { return DB.put('settings', { key: 'app', value: { ...S.settings } }); }
+
+function sortedPatients() {
+  return [...S.patients.values()].sort((a, b) =>
+    (a.cognome || '').localeCompare(b.cognome || '', 'it', { sensitivity: 'base' }) ||
+    (a.nome || '').localeCompare(b.nome || '', 'it', { sensitivity: 'base' }));
+}
+
+function sessionsOf(patientId, dir = 'desc') {
+  const list = [...S.sessions.values()].filter((s) => s.patientId === patientId);
+  list.sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.createdAt || '').localeCompare(b.createdAt || ''));
+  return dir === 'desc' ? list.reverse() : list;
+}
+
+function appointmentsOf(patientId) {
+  return [...S.appointments.values()].filter((a) => a.patientId === patientId);
+}
+
+const cmpAppt = (a, b) => (a.date || '').localeCompare(b.date || '') || (a.time || '').localeCompare(b.time || '');
+
+/* ==========================================================================
+   7. AUTOSALVATAGGIO (debounce + flush alla chiusura)
+   ========================================================================== */
+const Saver = {
+  timers: new Map(),
+  jobs: new Map(),
+  lastSavedAt: null,
+
+  schedule(key, job, delay = 450) {
+    this.jobs.set(key, job);
+    clearTimeout(this.timers.get(key));
+    this.timers.set(key, setTimeout(() => this.run(key), delay));
+    this.status('saving');
+  },
+
+  async run(key) {
+    const job = this.jobs.get(key);
+    clearTimeout(this.timers.get(key));
+    this.timers.delete(key);
+    this.jobs.delete(key);
+    if (!job) return;
+    try {
+      await job();
+      this.lastSavedAt = new Date();
+      if (this.jobs.size === 0) this.status('saved');
+    } catch (err) {
+      console.error(err);
+      this.status('error');
+      toast('Salvataggio non riuscito: ' + (err?.message || err), 'error', 6000);
+    }
+  },
+
+  async flush() {
+    await Promise.all([...this.jobs.keys()].map((k) => this.run(k)));
+  },
+
+  status(state) {
+    const el = document.getElementById('saveStatus');
+    if (!el) return;
+    el.classList.remove('saving', 'error');
+    if (state === 'saving') { el.classList.add('saving'); el.textContent = 'Salvataggio…'; }
+    else if (state === 'error') { el.classList.add('error'); el.textContent = 'Errore di salvataggio'; }
+    else { el.textContent = this.lastSavedAt ? `Salvato alle ${DF.time.format(this.lastSavedAt)}` : 'Salvato'; }
+  }
+};
+
+/* ==========================================================================
+   8. TOAST, MODALI, DIALOGHI
+   ========================================================================== */
+function toast(message, type = 'info', ms = 3200) {
+  const root = $('#toast-root');
+  if (!root) return;
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.setAttribute('role', type === 'error' ? 'alert' : 'status');
+  el.innerHTML = `${ic(type === 'error' ? 'alert' : type === 'ok' ? 'check' : 'info', 18)}<span>${esc(message)}</span>`;
+  root.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 260); }, ms);
+}
+
+const Modal = {
+  stack: [],
+
+  open({ title, body, footer = '', size = '', onMount, onClose }) {
+    const wrap = document.createElement('div');
+    wrap.className = 'modal-backdrop';
+    wrap.innerHTML = `
+      <div class="modal ${size}" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+        <header class="modal-head"><h3>${esc(title)}</h3><button class="icon-btn" data-modal-close aria-label="Chiudi">${ic('x')}</button></header>
+        <div class="modal-body">${body}</div>
+        ${footer ? `<footer class="modal-foot">${footer}</footer>` : ''}
+      </div>`;
+    $('#modal-root').appendChild(wrap);
+    const entry = { wrap, onClose };
+    this.stack.push(entry);
+    const close = () => this.close(entry);
+    wrap.addEventListener('click', (e) => {
+      if (e.target === wrap || e.target.closest('[data-modal-close]')) close();
+    });
+    requestAnimationFrame(() => wrap.classList.add('show'));
+    const el = wrap.querySelector('.modal');
+    if (onMount) onMount(el, close);
+    return { el, close };
+  },
+
+  close(entry = this.stack[this.stack.length - 1]) {
+    if (!entry) return;
+    const i = this.stack.indexOf(entry);
+    if (i < 0) return;
+    this.stack.splice(i, 1);
+    entry.wrap.classList.remove('show');
+    setTimeout(() => entry.wrap.remove(), 180);
+    if (entry.onClose) entry.onClose();
+  },
+
+  closeAll() { while (this.stack.length) this.close(); }
+};
+
+function confirmDialog(message, { title = 'Conferma', ok = 'Conferma', cancel = 'Annulla', danger = false } = {}) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (v) => { if (!settled) { settled = true; resolve(v); } };
+    Modal.open({
+      title,
+      size: 'sm',
+      body: `<p class="confirm-text">${esc(message)}</p>`,
+      footer: `<span class="spacer"></span><button class="btn" data-m="no">${esc(cancel)}</button><button class="btn ${danger ? 'danger' : 'primary'}" data-m="yes">${esc(ok)}</button>`,
+      onClose: () => finish(false),
+      onMount: (el, close) => {
+        el.querySelector('[data-m="yes"]').addEventListener('click', () => { finish(true); close(); });
+        el.querySelector('[data-m="no"]').addEventListener('click', () => close());
+        setTimeout(() => el.querySelector('[data-m="yes"]').focus(), 50);
+      }
+    });
+  });
+}
+
+/* Pulizie da eseguire quando si cambia vista (listener, URL blob, ecc.) */
+const cleanups = [];
+function addCleanup(fn) { cleanups.push(fn); }
+function runCleanups() { while (cleanups.length) { try { cleanups.pop()(); } catch (e) { console.error(e); } } }
+
+/* ==========================================================================
+   9. SAGOMA ANATOMICA (disegnata via Path2D, nessuna immagine esterna)
+   Coordinate in unità-figura: asse verticale 0 (vertice) → 976 (pianta del piede),
+   metà destra dell'outline; la sinistra è speculare.
+   ========================================================================== */
+const BODY_HALF = [
+  [18, 118], [22, 148], [68, 162], [104, 178], [121, 212], [127, 280], [136, 360], [150, 440],
+  [164, 508], [176, 540], [172, 582], [150, 578], [144, 532], [127, 452], [110, 372], [97, 292],
+  [88, 236], [84, 300], [77, 372], [87, 440], [95, 500], [88, 620], [80, 700], [78, 780],
+  [70, 900], [86, 948], [82, 976], [30, 976], [34, 940], [40, 850], [38, 720], [30, 640],
+  [20, 560], [6, 522]
+];
+
+let BODY_PATH = null;
+function bodyPath() {
+  if (BODY_PATH) return BODY_PATH;
+  const pts = [...BODY_HALF, ...BODY_HALF.slice().reverse().map(([x, y]) => [-x, y])];
+  const path = new Path2D();
+  const n = pts.length;
+  const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const start = mid(pts[n - 1], pts[0]);
+  path.moveTo(start[0], start[1]);
+  for (let i = 0; i < n; i++) {
+    const p = pts[i];
+    const m = mid(p, pts[(i + 1) % n]);
+    path.quadraticCurveTo(p[0], p[1], m[0], m[1]);
+  }
+  path.closePath();
+  BODY_PATH = path;
+  return path;
+}
+
+function drawFigure(ctx, cx, top, scale, view, c) {
+  ctx.save();
+  ctx.translate(cx, top);
+  ctx.scale(scale, scale);
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  const body = bodyPath();
+  ctx.fillStyle = c.fill;
+  ctx.strokeStyle = c.stroke;
+  ctx.lineWidth = 2.8;
+  ctx.fill(body);
+  ctx.stroke(body);
+
+  const head = new Path2D();
+  head.ellipse(0, 62, 40, 54, 0, 0, Math.PI * 2);
+  ctx.fill(head);
+  ctx.stroke(head);
+
+  ctx.strokeStyle = c.detail;
+  ctx.lineWidth = 2.2;
+  const curve = (x1, y1, cx1, cy1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(cx1, cy1, x2, y2); ctx.stroke(); };
+  const mirror = (fn) => { fn(1); fn(-1); };
+
+  if (view === 'front') {
+    mirror((k) => curve(8 * k, 172, 40 * k, 184, 78 * k, 168));          // clavicole
+    mirror((k) => curve(14 * k, 262, 46 * k, 288, 80 * k, 252));         // margine pettorale
+    mirror((k) => curve(6 * k, 334, 40 * k, 352, 74 * k, 360));          // arcate costali
+    mirror((k) => curve(84 * k, 462, 50 * k, 488, 12 * k, 516));         // legamenti inguinali
+    mirror((k) => { ctx.beginPath(); ctx.ellipse(57 * k, 655, 13, 17, 0, 0, Math.PI * 2); ctx.stroke(); }); // rotule
+    mirror((k) => curve(52 * k, 900, 54 * k, 915, 60 * k, 930));         // malleoli
+    ctx.setLineDash([5, 9]);
+    curve(0, 184, 0, 330, 0, 478);                                        // linea mediana
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(0, 420, 5, 0, Math.PI * 2); ctx.stroke();    // ombelico
+    curve(-8, 98, 0, 104, 8, 98);                                         // naso/bocca stilizzati
+  } else {
+    ctx.beginPath(); ctx.moveTo(0, 122); ctx.lineTo(0, 468); ctx.stroke(); // colonna
+    for (let y = 136; y <= 456; y += 20) { ctx.beginPath(); ctx.moveTo(-5, y); ctx.lineTo(5, y); ctx.stroke(); }
+    mirror((k) => {                                                       // scapole
+      ctx.beginPath();
+      ctx.moveTo(24 * k, 190);
+      ctx.quadraticCurveTo(55 * k, 180, 80 * k, 196);
+      ctx.quadraticCurveTo(70 * k, 250, 42 * k, 292);
+      ctx.quadraticCurveTo(30 * k, 240, 24 * k, 190);
+      ctx.stroke();
+    });
+    curve(-28, 96, 0, 110, 28, 96);                                       // linea occipitale
+    mirror((k) => curve(10 * k, 448, 50 * k, 428, 86 * k, 452));         // creste iliache
+    ctx.beginPath(); ctx.moveTo(-16, 462); ctx.lineTo(16, 462); ctx.lineTo(0, 502); ctx.closePath(); ctx.stroke(); // sacro
+    curve(0, 502, 0, 515, 0, 530);                                        // solco intergluteo
+    mirror((k) => curve(8 * k, 560, 48 * k, 578, 88 * k, 556));          // pieghe glutee
+    mirror((k) => curve(36 * k, 668, 56 * k, 676, 78 * k, 666));         // cavi poplitei
+    mirror((k) => curve(55 * k, 850, 53 * k, 890, 55 * k, 935));         // tendini d'Achille
+  }
+  ctx.restore();
+}
+
+function drawBodyScene(ctx, W, H) {
+  const c = {
+    fill: themeColor('--body-fill'),
+    stroke: themeColor('--body-stroke'),
+    detail: themeColor('--body-detail'),
+    label: themeColor('--muted')
+  };
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  ctx.scale(W / PM_W, H / PM_H);
+
+  ctx.strokeStyle = c.detail;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 12]);
+  ctx.beginPath(); ctx.moveTo(800, 80); ctx.lineTo(800, 950); ctx.stroke();
+  ctx.setLineDash([]);
+
+  drawFigure(ctx, 400, 100, 0.86, 'front', c);
+  drawFigure(ctx, 1200, 100, 0.86, 'back', c);
+
+  ctx.fillStyle = c.label;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '600 30px -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif';
+  ctx.fillText('Fronte', 400, 50);
+  ctx.fillText('Retro', 1200, 50);
+  ctx.globalAlpha = 0.8;
+  ctx.font = '700 26px -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif';
+  ctx.fillText('DX', 160, 560); ctx.fillText('SX', 640, 560);
+  ctx.fillText('SX', 960, 560); ctx.fillText('DX', 1440, 560);
+  ctx.restore();
+}
+
+function mountThumbs() {
+  $$('canvas[data-thumb]').forEach((cv) => {
+    const s = S.sessions.get(cv.dataset.thumb);
+    const ctx = cv.getContext('2d');
+    drawBodyScene(ctx, cv.width, cv.height);
+    if (s && s.painMap) {
+      const img = new Image();
+      img.onload = () => ctx.drawImage(img, 0, 0, cv.width, cv.height);
+      img.src = s.painMap;
+    }
+  });
+}
+
+/* ==========================================================================
+   10. GRAFICI SVG PROGRAMMATICI
+   ========================================================================== */
+function vasChartSVG(list) {
+  const data = list.filter((s) => s.date && Number.isFinite(s.vas))
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.createdAt || '').localeCompare(b.createdAt || ''));
+  if (!data.length) return '';
+  const W = 640, H = 220, L = 34, R = 20, T = 24, B = 40;
+  const iw = W - L - R, ih = H - T - B;
+  const X = (i) => (data.length === 1 ? L + iw / 2 : L + (i * iw) / (data.length - 1));
+  const Y = (v) => T + ih - (v / 10) * ih;
+  let grid = '';
+  for (let v = 0; v <= 10; v += 2) {
+    grid += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" class="grid"/><text x="${L - 10}" y="${Y(v) + 4}" class="axis" text-anchor="end">${v}</text>`;
+  }
+  const pts = data.map((s, i) => `${X(i).toFixed(1)},${Y(s.vas).toFixed(1)}`);
+  const area = `M${X(0).toFixed(1)},${Y(0)} L${pts.join(' L')} L${X(data.length - 1).toFixed(1)},${Y(0)} Z`;
+  const step = Math.max(1, Math.ceil(data.length / 7));
+  const labels = data.map((s, i) => ((i % step === 0 || i === data.length - 1)
+    ? `<text x="${X(i).toFixed(1)}" y="${H - 14}" class="axis" text-anchor="middle">${esc(fmtDate(s.date, 'dm'))}</text>` : '')).join('');
+  const dots = data.map((s, i) => `
+    <g class="vas-dot" data-action="open-session" data-id="${esc(s.id)}">
+      <circle cx="${X(i).toFixed(1)}" cy="${Y(s.vas).toFixed(1)}" r="14" fill="transparent"/>
+      <circle cx="${X(i).toFixed(1)}" cy="${Y(s.vas).toFixed(1)}" r="7" style="fill:${vasColor(s.vas)};stroke:var(--surface);stroke-width:2"/>
+      <text x="${X(i).toFixed(1)}" y="${(Y(s.vas) - 14).toFixed(1)}" text-anchor="middle" class="val">${s.vas}</text>
+    </g>`).join('');
+  const gid = 'vasg' + Math.random().toString(36).slice(2, 8);
+  const line = data.length > 1
+    ? `<path d="${area}" fill="url(#${gid})"/><polyline points="${pts.join(' ')}" fill="none" style="stroke:var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`
+    : '';
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Andamento del dolore VAS nelle sedute">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent);stop-opacity:.26"/><stop offset="1" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs>
+    ${grid}${line}${dots}${labels}</svg>`;
+}
+
+function weekChartSVG(weekStart, appts) {
+  const W = 560, H = 210, L = 30, R = 8, T = 16, B = 42;
+  const today = todayISO();
+  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const counts = days.map((d) => {
+    const iso = toISODate(d);
+    const list = appts.filter((a) => a.date === iso);
+    return { iso, d, done: list.filter((a) => a.status === 'eseguito').length, plan: list.filter((a) => a.status === 'pianificato').length };
+  });
+  const max = Math.max(4, ...counts.map((c) => c.done + c.plan));
+  const ih = H - T - B;
+  const bw = (W - L - R) / 7;
+  const Y = (v) => T + ih - (v / max) * ih;
+  let out = '';
+  [0, Math.round(max / 2), max].forEach((v) => {
+    out += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" class="grid"/><text x="${L - 8}" y="${Y(v) + 4}" class="axis" text-anchor="end">${v}</text>`;
+  });
+  counts.forEach((c, i) => {
+    const x = L + i * bw + bw * 0.2;
+    const w = bw * 0.6;
+    const hDone = (c.done / max) * ih;
+    const hPlan = (c.plan / max) * ih;
+    const base = T + ih;
+    if (hDone > 0) out += `<rect x="${x.toFixed(1)}" y="${(base - hDone).toFixed(1)}" width="${w.toFixed(1)}" height="${hDone.toFixed(1)}" rx="5" style="fill:var(--ok)"/>`;
+    if (hPlan > 0) out += `<rect x="${x.toFixed(1)}" y="${(base - hDone - hPlan).toFixed(1)}" width="${w.toFixed(1)}" height="${hPlan.toFixed(1)}" rx="5" style="fill:var(--info)" opacity=".8"/>`;
+    const cls = c.iso === today ? 'axis today' : 'axis';
+    out += `<text x="${(x + w / 2).toFixed(1)}" y="${H - 22}" class="${cls}" text-anchor="middle">${esc(DF.wd.format(c.d))}</text>`;
+    out += `<text x="${(x + w / 2).toFixed(1)}" y="${H - 6}" class="${cls}" text-anchor="middle">${c.d.getDate()}</text>`;
+  });
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Appuntamenti della settimana">${out}</svg>
+    <div class="legend"><span><i style="background:var(--ok)"></i>Eseguiti</span><span><i style="background:var(--info)"></i>Pianificati</span></div>`;
+}
+
+/* ==========================================================================
+   11. FRAMMENTI DI INTERFACCIA
+   ========================================================================== */
+function emptyState(title, text, icon = 'info') {
+  return `<div class="empty">${ic(icon, 34)}<strong>${esc(title)}</strong><span>${esc(text)}</span></div>`;
+}
+
+function statCard(value, label, icon) {
+  return `<div class="stat"><div class="ic-wrap">${ic(icon, 22)}</div><div><strong>${esc(value)}</strong><span>${esc(label)}</span></div></div>`;
+}
+
+function apptRow(a, { showDate = false } = {}) {
+  const p = S.patients.get(a.patientId);
+  const st = APPT_STATUS[a.status] || APPT_STATUS.pianificato;
+  const when = showDate ? cap(fmtDate(a.date, 'dmw')) + ', ' : '';
+  return `<li class="appt ${a.status}">
+    <button class="appt-main" data-action="edit-appt" data-id="${esc(a.id)}">
+      <span class="appt-time"><strong>${esc(a.time)}</strong><small>${esc(addMinutes(a.time, a.duration))}</small></span>
+      <span class="appt-body"><strong>${esc(fullName(p))}</strong><small>${esc(when)}${esc(a.type || '')}${a.note ? ' – ' + esc(a.note) : ''}</small></span>
+      <span class="pill ${st.cls}">${st.label}</span>
+    </button>
+    ${a.status === 'pianificato' ? `<div class="appt-quick">
+      <button class="icon-btn ok" data-action="appt-status" data-id="${esc(a.id)}" data-status="eseguito" aria-label="Segna come eseguito">${ic('check', 18)}</button>
+      <button class="icon-btn danger" data-action="appt-status" data-id="${esc(a.id)}" data-status="annullato" aria-label="Segna come annullato">${ic('x', 18)}</button>
+    </div>` : ''}
+  </li>`;
+}
+
+function backupWarningHTML() {
+  const hasData = S.patients.size > 0;
+  if (!hasData) return '';
+  const last = S.settings.lastBackupAt ? new Date(S.settings.lastBackupAt) : null;
+  const days = last ? Math.floor((Date.now() - last.getTime()) / 86400000) : null;
+  if (last && days < 7) return '';
+  const text = last
+    ? `L’ultimo backup risale a ${plural(days, 'giorno', 'giorni')} fa. Safari può cancellare i dati dei siti non usati di recente: esporta una copia sul disco esterno.`
+    : 'Non hai ancora esportato un backup. Salva una copia cifrata sul disco esterno per proteggere l’archivio.';
+  return `<div class="banner warn" style="margin-bottom:18px">${ic('alert')}<div><strong>Backup consigliato</strong><p>${esc(text)}</p></div><button class="btn sm" data-action="nav" data-view="backup">Vai al backup</button></div>`;
+}
+
+/* ==========================================================================
+   12. VISTA: DASHBOARD
+   ========================================================================== */
+function viewDashboard() {
+  const now = new Date();
+  const today = todayISO();
+  const ws = startOfWeek(now);
+  const wsI = toISODate(ws), weI = toISODate(addDays(ws, 6));
+  const appts = [...S.appointments.values()];
+  const todayList = appts.filter((a) => a.date === today).sort(cmpAppt);
+  const week = appts.filter((a) => a.date >= wsI && a.date <= weI);
+  const monthKey = today.slice(0, 7);
+  const monthSessions = [...S.sessions.values()].filter((s) => (s.date || '').startsWith(monthKey)).length;
+  const upcoming = appts.filter((a) => a.status === 'pianificato' && a.date > today).sort(cmpAppt).slice(0, 6);
+  const recent = [...S.sessions.values()]
+    .sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.updatedAt || '').localeCompare(a.updatedAt || ''))
+    .slice(0, 5);
+  const h = now.getHours();
+  const greet = h < 13 ? 'Buongiorno' : h < 18 ? 'Buon pomeriggio' : 'Buonasera';
+  const who = S.settings.therapistName ? `, ${S.settings.therapistName}` : '';
+
+  return `<div class="page">
+    <header class="page-head">
+      <div><p class="date-line">${esc(cap(fmtDate(today, 'long')))}</p><h1>${esc(greet + who)}</h1></div>
+      <div class="head-actions">
+        <button class="btn" data-action="new-patient">${ic('users', 18)}<span>Nuovo paziente</span></button>
+        <button class="btn primary" data-action="new-appt">${ic('plus', 18)}<span>Nuovo appuntamento</span></button>
+      </div>
+    </header>
+    ${backupWarningHTML()}
+    <section class="stats">
+      ${statCard(todayList.filter((a) => a.status !== 'annullato').length, 'Appuntamenti oggi', 'calendar')}
+      ${statCard(week.filter((a) => a.status !== 'annullato').length, `In settimana (${week.filter((a) => a.status === 'eseguito').length} eseguiti)`, 'activity')}
+      ${statCard(S.patients.size, 'Pazienti in archivio', 'users')}
+      ${statCard(monthSessions, 'Sedute questo mese', 'clipboard')}
+    </section>
+    <div class="dash-grid">
+      <section class="card">
+        <div class="card-head"><h2>Agenda di oggi</h2><button class="btn sm ghost" data-action="nav" data-view="agenda"><span>Apri agenda</span>${ic('chevR', 16)}</button></div>
+        ${todayList.length ? `<ul class="appt-list">${todayList.map((a) => apptRow(a)).join('')}</ul>` : emptyState('Nessun appuntamento oggi', 'Usa “Nuovo appuntamento” per pianificare la giornata.', 'calendar')}
+      </section>
+      <section class="card">
+        <div class="card-head"><h2>Carico della settimana</h2><span class="muted sm">${esc(fmtDate(wsI, 'dm'))} – ${esc(fmtDate(weI, 'dm'))}</span></div>
+        ${weekChartSVG(ws, appts)}
+      </section>
+      <section class="card">
+        <div class="card-head"><h2>Prossimi appuntamenti</h2></div>
+        ${upcoming.length ? `<ul class="appt-list">${upcoming.map((a) => apptRow(a, { showDate: true })).join('')}</ul>` : emptyState('Nessun appuntamento futuro', 'Gli appuntamenti pianificati dei prossimi giorni compariranno qui.', 'clock')}
+      </section>
+      <section class="card">
+        <div class="card-head"><h2>Ultime sedute</h2></div>
+        ${recent.length ? `<ul class="mini-list">${recent.map((s) => {
+          const p = S.patients.get(s.patientId);
+          const badge = Number.isFinite(s.vas) ? `<span class="vas-badge" style="--c:${vasColor(s.vas)}">VAS ${s.vas}</span>` : '<span class="vas-badge none">VAS –</span>';
+          return `<li><button class="mini-row" data-action="open-session" data-id="${esc(s.id)}"><span class="avatar">${esc(initials(p))}</span><span class="grow"><strong>${esc(fullName(p))}</strong><small>${esc(fmtDate(s.date, 'medium'))}${s.sintomo ? ' – ' + esc(s.sintomo) : ''}</small></span>${badge}</button></li>`;
+        }).join('')}</ul>` : emptyState('Nessuna seduta registrata', 'Apri la scheda di un paziente e tocca “Nuova seduta”.', 'clipboard')}
+      </section>
+    </div>
+  </div>`;
+}
+
+/* ==========================================================================
+   13. VISTA: AGENDA SETTIMANALE
+   ========================================================================== */
+function viewAgenda() {
+  const ws = S.weekStart;
+  const days = Array.from({ length: 7 }, (_, i) => addDays(ws, i));
+  const today = todayISO();
+  const wsI = toISODate(ws), weI = toISODate(days[6]);
+  const appts = [...S.appointments.values()].filter((a) => a.date >= wsI && a.date <= weI).sort(cmpAppt);
+  const byDay = (iso) => appts.filter((a) => a.date === iso);
+  const counts = Object.keys(APPT_STATUS).map((k) => ({ k, n: appts.filter((a) => a.status === k).length }));
+
+  const weekHTML = `<div class="week"><div class="week-grid">${days.map((d, i) => {
+    const iso = toISODate(d);
+    const list = byDay(iso);
+    return `<div class="day ${iso === today ? 'today' : ''} ${i >= 5 ? 'weekend' : ''}">
+      <div class="day-head"><span>${esc(DF.wd.format(d))}</span><strong>${d.getDate()}</strong>
+        <button class="icon-btn sm" data-action="new-appt" data-date="${iso}" aria-label="Nuovo appuntamento il ${esc(fmtDate(iso, 'medium'))}">${ic('plus', 16)}</button></div>
+      <div class="day-body">${list.length ? list.map((a) => {
+        const p = S.patients.get(a.patientId);
+        return `<button class="wcard ${a.status}" data-action="edit-appt" data-id="${esc(a.id)}"><time>${esc(a.time)}–${esc(addMinutes(a.time, a.duration))}</time><strong>${esc(fullName(p))}</strong><small>${esc(a.type || '')}</small></button>`;
+      }).join('') : '<div class="day-empty">Libero</div>'}</div>
+    </div>`;
+  }).join('')}</div></div>`;
+
+  const listDays = days.filter((d) => byDay(toISODate(d)).length);
+  const listHTML = listDays.length
+    ? listDays.map((d) => {
+        const iso = toISODate(d);
+        return `<div class="day-group"><h3>${esc(fmtDate(iso, 'dmw'))}${iso === today ? ' (oggi)' : ''}</h3><ul class="appt-list">${byDay(iso).map((a) => apptRow(a)).join('')}</ul></div>`;
+      }).join('')
+    : `<div class="card">${emptyState('Settimana libera', 'Non ci sono appuntamenti in questa settimana.', 'calendar')}</div>`;
+
+  return `<div class="page">
+    <header class="page-head">
+      <div><p class="date-line">Agenda</p><h1>Appuntamenti</h1></div>
+      <div class="head-actions">
+        <div class="seg" role="group" aria-label="Modalità di visualizzazione">
+          <button data-action="agenda-mode" data-mode="week" class="${S.agendaMode === 'week' ? 'on' : ''}">Settimana</button>
+          <button data-action="agenda-mode" data-mode="list" class="${S.agendaMode === 'list' ? 'on' : ''}">Elenco</button>
+        </div>
+        <button class="btn primary" data-action="new-appt">${ic('plus', 18)}<span>Nuovo appuntamento</span></button>
+      </div>
+    </header>
+    <div class="agenda-bar">
+      <button class="icon-btn" data-action="week-prev" aria-label="Settimana precedente">${ic('chevL')}</button>
+      <button class="icon-btn" data-action="week-next" aria-label="Settimana successiva">${ic('chevR')}</button>
+      <span class="range">${esc(fmtDate(wsI, 'dm'))} – ${esc(fmtDate(weI, 'medium'))}</span>
+      <button class="btn sm" data-action="week-today">Oggi</button>
+    </div>
+    ${S.agendaMode === 'week' ? weekHTML : listHTML}
+    <div class="week-summary">${counts.map((c) => `<span class="pill ${APPT_STATUS[c.k].cls}">${APPT_STATUS[c.k].label}: ${c.n}</span>`).join('')}</div>
+  </div>`;
+}
+
+/* ==========================================================================
+   14. VISTA: PAZIENTI (elenco + cartella clinica)
+   ========================================================================== */
+function lastSessionByPatient() {
+  const map = new Map();
+  S.sessions.forEach((s) => {
+    const cur = map.get(s.patientId);
+    if (!cur || (s.date || '') > cur) map.set(s.patientId, s.date || '');
+  });
+  return map;
+}
+
+function patientListHTML() {
+  const q = norm(S.search);
+  const last = lastSessionByPatient();
+  const list = sortedPatients().filter((p) => {
+    if (!q) return true;
+    const hay = norm(`${p.nome} ${p.cognome} ${p.cognome} ${p.nome} ${p.codiceFiscale} ${p.telefono} ${p.email}`);
+    return q.split(/\s+/).every((t) => hay.includes(t));
+  });
+  if (!S.patients.size) return emptyState('Archivio vuoto', 'Crea la prima scheda con “Nuovo”.', 'users');
+  if (!list.length) return emptyState('Nessun risultato', `Nessun paziente corrisponde a “${S.search}”.`, 'search');
+  return `<div class="list-count">${plural(list.length, 'paziente', 'pazienti')}</div>` + list.map((p) => {
+    const a = ageOf(p.dataNascita);
+    const ls = last.get(p.id);
+    const meta = [a !== null ? `${a} anni` : null, ls ? `ultima seduta ${fmtDate(ls, 'dm')}` : 'nessuna seduta'].filter(Boolean).join(', ');
+    const flag = (p.anamnesi.controindicazioni || '').trim() ? '<span class="flag" title="Controindicazioni presenti"></span>' : '';
+    return `<button class="p-item ${p.id === S.patientId ? 'active' : ''}" data-action="select-patient" data-id="${esc(p.id)}">
+      <span class="avatar">${esc(initials(p))}</span><span class="grow"><strong>${esc(fullName(p))}</strong><small>${esc(meta)}</small></span>${flag}</button>`;
+  }).join('');
+}
+
+function patientMetaLine(p) {
+  const a = ageOf(p.dataNascita);
+  return [
+    a !== null ? `${a} anni` : null,
+    p.dataNascita ? `nato/a il ${fmtDate(p.dataNascita, 'short')}` : null,
+    p.telefono || null
+  ].filter(Boolean).join(', ') || 'Completa i dati anagrafici';
+}
+
+function viewPatients() {
+  const p = S.patientId ? S.patients.get(S.patientId) : null;
+  if (S.patientId && !p) S.patientId = null;
+  return `<div class="split ${p ? 'show-detail' : ''}">
+    <section class="pane list-pane" aria-label="Elenco pazienti">
+      <div class="list-head"><h1>Pazienti</h1><button class="btn primary sm" data-action="new-patient">${ic('plus', 18)}<span>Nuovo</span></button></div>
+      <label class="search">${ic('search', 18)}<input id="patientSearch" type="search" placeholder="Cerca per nome o cognome" value="${esc(S.search)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Cerca paziente"></label>
+      <div id="patientList" class="patient-list">${patientListHTML()}</div>
+    </section>
+    <section class="pane detail-pane">${p ? patientDetailHTML(p) : `<div class="detail-empty">${emptyState('Seleziona un paziente', 'Scegli una scheda dall’elenco o creane una nuova.', 'users')}</div>`}</section>
+  </div>`;
+}
+
+function patientDetailHTML(p) {
+  const sessions = sessionsOf(p.id);
+  const ci = (p.anamnesi.controindicazioni || '').trim();
+  const nConsents = Object.keys(CONSENTS).filter((k) => p.consensi[k]).length;
+  const tabs = [
+    ['anagrafica', 'Anagrafica', ''],
+    ['anamnesi', 'Anamnesi', ''],
+    ['consensi', 'Consensi', `${nConsents}/2`],
+    ['diario', 'Diario clinico', String(sessions.length)]
+  ];
+  let body = '';
+  if (S.patientTab === 'anamnesi') body = tabAnamnesi(p);
+  else if (S.patientTab === 'consensi') body = tabConsensi(p);
+  else if (S.patientTab === 'diario') body = tabDiario(p, sessions);
+  else body = tabAnagrafica(p);
+
+  return `<div class="detail">
+    <header class="p-head">
+      <button class="btn ghost sm back-btn" data-action="back-to-list">${ic('chevL', 18)}<span>Elenco pazienti</span></button>
+      <span class="avatar lg" id="pHeadAvatar">${esc(initials(p))}</span>
+      <div class="p-head-text"><h2 id="pHeadName">${esc(fullName(p))}</h2><p class="muted" id="pHeadMeta">${esc(patientMetaLine(p))}</p></div>
+      <div class="head-actions">
+        <button class="btn" data-action="new-appt" data-patient="${esc(p.id)}">${ic('calendar', 18)}<span>Appuntamento</span></button>
+        <button class="btn primary" data-action="new-session" data-patient="${esc(p.id)}">${ic('plus', 18)}<span>Nuova seduta</span></button>
+      </div>
+    </header>
+    ${ci ? `<div class="banner warn">${ic('alert')}<div><strong>Controindicazioni</strong><p>${esc(ci)}</p></div></div>` : ''}
+    <nav class="tabs" role="tablist">${tabs.map(([k, label, count]) =>
+      `<button class="tab ${S.patientTab === k ? 'on' : ''}" role="tab" aria-selected="${S.patientTab === k}" data-action="patient-tab" data-tab="${k}">${label}${count ? `<span class="count">${count}</span>` : ''}</button>`).join('')}</nav>
+    <div class="tab-body">${body}</div>
+  </div>`;
+}
+
+function fieldHTML(f, value, scope) {
+  const bind = `data-bind="${scope}.${f.k}"`;
+  const id = `f-${scope}-${f.k}`;
+  let control;
+  if (f.type === 'select') {
+    control = `<select id="${id}" ${bind}>${f.options.map(([v, l]) => `<option value="${esc(v)}" ${v === value ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+  } else if (f.type === 'textarea') {
+    control = `<textarea id="${id}" ${bind} rows="4">${esc(value)}</textarea>`;
+  } else {
+    const extra = f.type === 'email' ? 'autocapitalize="off" autocorrect="off"' : (f.type === 'text' ? 'autocapitalize="words"' : '');
+    control = `<input id="${id}" type="${f.type}" ${bind} value="${esc(value)}" ${extra} ${f.upper ? 'class="upper" autocapitalize="characters"' : ''} autocomplete="off">`;
+  }
+  return `<label class="field ${f.wide ? 'wide' : ''}" for="${id}"><span>${esc(f.label)}</span>${control}</label>`;
+}
+
+function tabAnagrafica(p) {
+  return `<section class="card"><div class="form-grid">${PATIENT_FIELDS.map((f) => fieldHTML(f, p[f.k] || '', 'p')).join('')}</div>
+      <p class="meta-foot">Scheda creata il ${esc(fmtDateTime(p.createdAt))}. Ultima modifica il ${esc(fmtDateTime(p.updatedAt))}. Le modifiche si salvano automaticamente.</p></section>
+    <section class="card danger-zone"><h2>Elimina paziente</h2><p>Rimuove la scheda, tutte le sedute, gli appuntamenti e i PDF dei consensi di questo paziente.</p>
+      <button class="btn danger" data-action="delete-patient">${ic('trash', 18)}<span>Elimina paziente</span></button></section>`;
+}
+
+function tabAnamnesi(p) {
+  return `<div class="ana-grid">${ANAMNESI_FIELDS.map((f) => `
+    <section class="card ${f.warn ? 'warn' : ''}">
+      <h3>${f.warn ? ic('alert', 18) : ''} ${esc(f.label)}</h3>
+      <p class="muted">${esc(f.hint)}</p>
+      <textarea data-bind="a.${f.k}" aria-label="${esc(f.label)}">${esc(p.anamnesi[f.k] || '')}</textarea>
+    </section>`).join('')}</div>`;
+}
+
+function tabConsensi(p) {
+  const card = (kind) => {
+    const meta = p.consensi[kind];
+    return `<div class="consent ${meta ? 'ok' : ''}">
+      <div class="consent-icon">${ic('file', 26)}</div>
+      <div class="consent-text"><strong>${esc(CONSENTS[kind].label)}</strong>
+        ${meta ? `<span>${esc(meta.name)} (${esc(fmtBytes(meta.size))}), caricato il ${esc(fmtDateTime(meta.uploadedAt))}</span>` : '<span>Nessun documento caricato</span>'}</div>
+      <span class="pill ${meta ? 'ok' : 'warn'}">${meta ? 'Presente' : 'Mancante'}</span>
+      <div class="consent-actions">
+        ${meta ? `
+          <button class="btn primary" data-action="pdf-view" data-kind="${kind}">${ic('eye', 18)}<span>Vedi</span></button>
+          <button class="btn" data-action="pdf-upload" data-kind="${kind}">${ic('upload', 18)}<span>Sovrascrivi</span></button>
+          <button class="btn danger-ghost" data-action="pdf-remove" data-kind="${kind}">${ic('trash', 18)}<span>Rimuovi</span></button>`
+        : `<button class="btn primary" data-action="pdf-upload" data-kind="${kind}">${ic('upload', 18)}<span>Carica PDF</span></button>`}
+      </div>
+    </div>`;
+  };
+  return `${Object.keys(CONSENTS).map(card).join('')}
+    <p class="hint">I PDF vengono convertiti in Base64 e salvati nel database locale del browser. Sono inclusi automaticamente nel file di backup.</p>`;
+}
+
+function tabDiario(p, sessions) {
+  const chart = vasChartSVG(sessions);
+  return `<section class="card">
+      <div class="card-head"><h3>Andamento del dolore (VAS 0–10)</h3><span class="muted sm">${plural(sessions.length, 'seduta', 'sedute')}</span></div>
+      ${chart || emptyState('Nessun valore VAS registrato', 'Il grafico si popola indicando la VAS in ogni seduta.', 'activity')}
+    </section>
+    ${sessions.length ? `<div class="session-list">${sessions.map((s, i) => sessionCardHTML(s, sessions.length - i)).join('')}</div>`
+      : `<section class="card" style="margin-top:18px">${emptyState('Diario vuoto', 'Registra la prima seduta con “Nuova seduta”.', 'clipboard')}</section>`}`;
+}
+
+function sessionCardHTML(s, number) {
+  const tech = Object.keys(TECHNIQUES).filter((k) => s.tecniche[k].length);
+  const badge = Number.isFinite(s.vas) ? `<span class="vas-badge" style="--c:${vasColor(s.vas)}">VAS ${s.vas}</span>` : '<span class="vas-badge none">VAS –</span>';
+  return `<button class="s-card" data-action="open-session" data-id="${esc(s.id)}">
+    <canvas data-thumb="${esc(s.id)}" width="480" height="300" aria-hidden="true"></canvas>
+    <span class="s-body">
+      <span class="s-top"><strong>Seduta ${number}, ${esc(fmtDate(s.date, 'medium'))}</strong>${badge}</span>
+      <span class="s-sym">${s.sintomo ? esc(s.sintomo) : 'Sintomo principale non indicato'}</span>
+      ${tech.length ? `<span class="s-tags">${tech.map((k) => `<span class="pill neutral">${esc(TECHNIQUES[k].label)} ${s.tecniche[k].length}</span>`).join('')}</span>` : ''}
+    </span>
+  </button>`;
+}
+
+/* ==========================================================================
+   15. VISTA: SEDUTA (diario clinico + mappa del dolore)
+   ========================================================================== */
+function pmToolbarHTML() {
+  const pm = S.pm;
+  return `<div class="pm-toolbar" id="pmToolbar">
+    <div class="pm-colors" role="radiogroup" aria-label="Tipo di dolore">
+      ${PAIN_COLORS.map((c) => `<button class="swatch ${pm.tool === 'pen' && pm.color === c.color ? 'on' : ''}" data-pm="color" data-color="${c.color}" style="--sw:${c.color}" role="radio" aria-checked="${pm.tool === 'pen' && pm.color === c.color}"><span class="dot"></span><span>${esc(c.label)}</span></button>`).join('')}
+    </div>
+    <div class="pm-row">
+      <div class="seg" role="group" aria-label="Strumento">
+        <button data-pm="tool" data-tool="pen" class="${pm.tool === 'pen' ? 'on' : ''}">${ic('pen', 18)}<span>Penna</span></button>
+        <button data-pm="tool" data-tool="eraser" class="${pm.tool === 'eraser' ? 'on' : ''}">${ic('eraser', 18)}<span>Gomma</span></button>
+      </div>
+      <label class="pm-size"><span class="size-dot-box"><span class="size-dot" id="pmSizeDot"></span></span>
+        <input type="range" id="pmSize" min="2" max="48" step="1" value="${pm.size}" aria-label="Spessore del tratto"><output id="pmSizeVal">${pm.size}</output></label>
+      <label class="toggle"><input type="checkbox" id="pmPressure" ${S.settings.pressure ? 'checked' : ''}><span class="track"></span><span>Pressione</span></label>
+      <label class="toggle"><input type="checkbox" id="pmPencil" ${S.settings.onlyPencil ? 'checked' : ''}><span class="track"></span><span>Solo Pencil</span></label>
+      <div class="pm-actions">
+        <button class="btn sm" data-pm="undo">${ic('undo', 18)}<span>Annulla</span></button>
+        <button class="btn sm danger-ghost" data-pm="clear">${ic('trash', 18)}<span>Pulisci</span></button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function viewSession() {
+  const s = S.sessions.get(S.sessionId);
+  if (!s) return `<div class="page">${emptyState('Seduta non trovata', 'Potrebbe essere stata eliminata.', 'alert')}</div>`;
+  const p = S.patients.get(s.patientId);
+  const asc = sessionsOf(s.patientId, 'asc');
+  const number = asc.findIndex((x) => x.id === s.id) + 1;
+  const ci = (p?.anamnesi.controindicazioni || '').trim();
+  const appt = s.appointmentId ? S.appointments.get(s.appointmentId) : null;
+
+  const techHTML = Object.entries(TECHNIQUES).map(([cat, def]) => {
+    const sel = s.tecniche[cat];
+    const extras = sel.filter((x) => !def.items.includes(x));
+    return `<div class="tech-group"><h3>${esc(def.label)}<span id="tc-${cat}" class="${sel.length ? 'has' : ''}">${sel.length}</span></h3>
+      <div class="chips">${[...def.items, ...extras].map((item) =>
+        `<button class="chip ${sel.includes(item) ? 'on' : ''}" data-action="tech-toggle" data-cat="${cat}" data-item="${esc(item)}" aria-pressed="${sel.includes(item)}">${esc(item)}</button>`).join('')}</div></div>`;
+  }).join('');
+
+  return `<div class="page">
+    <header class="session-head">
+      <button class="btn ghost" data-action="back-from-session">${ic('chevL', 18)}<span>${esc(fullName(p))}</span></button>
+      <div class="title"><h1 id="sessionTitle">Seduta del ${esc(fmtDate(s.date, 'medium'))}</h1>
+        <p class="muted">Seduta n. ${number}${appt ? `, collegata all’appuntamento delle ${esc(appt.time)}` : ''}</p></div>
+      <span class="save-status" id="saveStatus">Salvato</span>
+      <button class="btn danger-ghost" data-action="delete-session">${ic('trash', 18)}<span>Elimina</span></button>
+    </header>
+    ${ci ? `<div class="banner danger" style="margin-bottom:18px">${ic('alert')}<div><strong>Controindicazioni del paziente</strong><p>${esc(ci)}</p></div></div>` : ''}
+
+    <section class="card">
+      <div class="session-top">
+        <label class="field"><span>Data</span><input type="date" data-bind="s.date" value="${esc(s.date)}"></label>
+        <label class="field"><span>Sintomo principale</span><input type="text" data-bind="s.sintomo" value="${esc(s.sintomo)}" placeholder="Es. lombalgia destra con irradiazione al gluteo" autocomplete="off"></label>
+        <div class="field vas-field"><span>Intensità del dolore (VAS)</span>
+          <div class="vas" role="radiogroup" aria-label="Scala VAS da 0 a 10">
+            ${Array.from({ length: 11 }, (_, v) => `<button class="vas-btn ${s.vas === v ? 'on' : ''}" style="--c:${vasColor(v)}" data-action="set-vas" data-v="${v}" role="radio" aria-checked="${s.vas === v}">${v}</button>`).join('')}
+          </div>
+          <div class="vas-meta"><span>0 nessun dolore</span><strong id="vasLabel">${esc(vasLabel(s.vas))}</strong><span>10 massimo</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Mappa del dolore</h2><span class="muted sm">Disegna con Apple Pencil; la pressione modula lo spessore.</span></div>
+      ${pmToolbarHTML()}
+      <div class="pm-wrap" id="pmWrap">
+        <canvas id="pmBg" aria-hidden="true"></canvas>
+        <canvas id="pmDraw" role="img" aria-label="Mappa del dolore, vista anteriore e posteriore"></canvas>
+        <div class="pm-cursor" id="pmCursor"></div>
+      </div>
+      <div class="pm-legend"><span>DX e SX indicano i lati del paziente.</span><span>Il disegno viene salvato automaticamente con la seduta.</span></div>
+    </section>
+
+    <div class="grid-2">
+      <section class="card"><h2>Valutazione palpatoria</h2>
+        <textarea data-bind="s.palpatoria" rows="6" placeholder="Tensioni tissutali, restrizioni di mobilità, temperatura, trofismo, punti dolenti…">${esc(s.palpatoria)}</textarea></section>
+      <section class="card"><h2>Test eseguiti</h2>
+        <textarea data-bind="s.test" rows="6" placeholder="Test ortopedici, neurologici, osteopatici ed esiti (es. Lasègue negativo, TFE positivo a dx)…">${esc(s.test)}</textarea></section>
+    </div>
+
+    <section class="card">
+      <div class="card-head"><h2>Tecniche osteopatiche</h2><span class="muted sm">Tocca per selezionare</span></div>
+      <div class="tech-grid">${techHTML}</div>
+      <label class="field" style="margin-top:16px"><span>Dettagli sulle tecniche</span>
+        <textarea data-bind="s.tecnicheNote" rows="3" placeholder="Distretti trattati, parametri, risposta tissutale…">${esc(s.tecnicheNote)}</textarea></label>
+    </section>
+
+    <div class="grid-2">
+      <section class="card"><h2>Esito e risposta al trattamento</h2>
+        <textarea data-bind="s.esito" rows="5" placeholder="Variazioni immediate, reazioni, rivalutazione post-trattamento…">${esc(s.esito)}</textarea></section>
+      <section class="card"><h2>Indicazioni e follow-up</h2>
+        <textarea data-bind="s.indicazioni" rows="5" placeholder="Esercizi consigliati, ergonomia, controllo previsto…">${esc(s.indicazioni)}</textarea></section>
+    </div>
+  </div>`;
+}
+
+/* ==========================================================================
+   16. VISTA: BACKUP E RIPRISTINO
+   ========================================================================== */
+function viewBackup() {
+  const exp = S.exportReady;
+  const imp = S.pendingImport;
+  const cryptoOk = Vault.available();
+  const last = S.settings.lastBackupAt;
+
+  const exportForm = `
+    <label class="toggle"><input type="checkbox" id="expEncrypt" ${cryptoOk ? 'checked' : 'disabled'}><span class="track"></span><span>Cifra con password (AES-256-GCM)</span></label>
+    <div class="form-grid" id="expPwBox" style="margin-top:12px" ${cryptoOk ? '' : 'hidden'}>
+      <label class="field"><span>Password</span><input type="password" id="expPw" autocomplete="new-password" placeholder="Almeno 8 caratteri"></label>
+      <label class="field"><span>Ripeti password</span><input type="password" id="expPw2" autocomplete="new-password"></label>
+    </div>
+    <p class="hint">La password non viene memorizzata. Senza di essa il backup cifrato non è recuperabile.</p>
+    <div class="row-end"><button class="btn primary" data-action="export-prepare" id="expBtn">${ic('lock', 18)}<span>Prepara backup</span></button></div>`;
+
+  const exportDone = exp ? `
+    <div class="file-chip">${ic('file', 30)}<div><strong>${esc(exp.name)}</strong>
+      <span>${esc(fmtBytes(exp.size))}, ${exp.encrypted ? 'cifrato' : 'non cifrato'}: ${plural(exp.meta.counts.patients, 'paziente', 'pazienti')}, ${plural(exp.meta.counts.sessions, 'seduta', 'sedute')}, ${plural(exp.meta.counts.appointments, 'appuntamento', 'appuntamenti')}, ${exp.meta.counts.files} PDF</span></div></div>
+    <div class="row-end">
+      <button class="btn ghost" data-action="export-discard">Chiudi</button>
+      <button class="btn" data-action="export-download">${ic('download', 18)}<span>Scarica</span></button>
+      <button class="btn primary" data-action="export-share">${ic('share', 18)}<span>Salva su File…</span></button>
+    </div>` : '';
+
+  const importBlock = imp ? `
+    <div class="file-chip">${ic('file', 30)}<div><strong>${esc(imp.name)}</strong>
+      <span>${esc(fmtBytes(imp.size))}, creato il ${esc(fmtDateTime(imp.json.meta?.createdAt))}, ${imp.json.encrypted ? 'cifrato' : 'non cifrato'}${imp.json.meta?.counts ? `: ${plural(imp.json.meta.counts.patients, 'paziente', 'pazienti')}, ${plural(imp.json.meta.counts.sessions, 'seduta', 'sedute')}` : ''}</span></div></div>
+    ${imp.json.encrypted ? `<label class="field" style="margin-top:14px"><span>Password del backup</span><input type="password" id="impPw" autocomplete="off"></label>` : ''}
+    <fieldset class="radio-cards">
+      <label class="radio-card"><input type="radio" name="impMode" value="merge" checked><span><strong>Unisci</strong><small>Aggiunge i record mancanti; per quelli presenti in entrambi mantiene la versione più recente.</small></span></label>
+      <label class="radio-card"><input type="radio" name="impMode" value="replace"><span><strong>Sostituisci tutto</strong><small>Cancella l’archivio di questo iPad e ripristina esattamente il backup.</small></span></label>
+    </fieldset>
+    <div class="row-end">
+      <button class="btn ghost" data-action="import-cancel">Annulla</button>
+      <button class="btn primary" data-action="import-run" id="impBtn">${ic('upload', 18)}<span>Importa backup</span></button>
+    </div>`
+    : `<div class="row-end" style="justify-content:flex-start"><button class="btn" data-action="import-pick">${ic('upload', 18)}<span>Seleziona file di backup…</span></button></div>`;
+
+  return `<div class="page narrow">
+    <header class="page-head"><div><p class="date-line">Sicurezza dei dati</p><h1>Backup e ripristino</h1></div></header>
+    ${!cryptoOk ? `<div class="banner warn" style="margin-bottom:18px">${ic('alert')}<div><strong>Cifratura non disponibile in questo contesto</strong><p>Il browser non espone le API Web Crypto (succede con alcune anteprime di file). Puoi esportare e importare backup non cifrati; aprendo l’app in Safari o da un server locale la cifratura torna disponibile.</p></div></div>` : ''}
+
+    <section class="card">
+      <div class="card-head"><h2>${ic('download')}Esporta backup</h2>${last ? `<span class="muted sm">Ultimo backup: ${esc(fmtDateTime(last))}</span>` : '<span class="pill warn">Mai eseguito</span>'}</div>
+      <p class="muted">Crea un unico file .json con pazienti, anamnesi, sedute, mappe del dolore, appuntamenti, PDF dei consensi e impostazioni.</p>
+      ${exp ? exportDone : exportForm}
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>${ic('upload')}Importa backup</h2></div>
+      <p class="muted">Seleziona un file creato da OsteoStudio, anche direttamente dal disco esterno in app File.</p>
+      ${importBlock}
+    </section>
+
+    <section class="card">
+      <h2>Salvare sul disco SanDisk</h2>
+      <ol class="steps">
+        <li>Collega il disco all’iPad e sbloccalo, poi verifica che compaia in app File, sotto Posizioni.</li>
+        <li>Tocca “Prepara backup”, quindi “Salva su File…”.</li>
+        <li>Nel foglio di condivisione scegli “Salva in File”, seleziona il disco SanDisk e la cartella di destinazione, poi tocca “Salva”.</li>
+        <li>Per ripristinare usa “Seleziona file di backup…” e scegli il file direttamente dal disco.</li>
+      </ol>
+      <p class="hint">In alternativa “Scarica” salva il file nella cartella Download, da cui puoi spostarlo sul disco.</p>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Archivio su questo iPad</h2><button class="btn sm" data-action="request-persist">${ic('lock', 16)}<span>Richiedi archiviazione persistente</span></button></div>
+      <div class="kv" id="storageInfo">
+        <div><span>Pazienti</span><strong>${S.patients.size}</strong></div>
+        <div><span>Sedute</span><strong>${S.sessions.size}</strong></div>
+        <div><span>Appuntamenti</span><strong>${S.appointments.size}</strong></div>
+        <div><span>Spazio usato</span><strong id="stUsed">…</strong></div>
+        <div><span>Archiviazione persistente</span><strong id="stPersist">…</strong></div>
+      </div>
+    </section>
+  </div>`;
+}
+
+/* ==========================================================================
+   17. VISTA: IMPOSTAZIONI
+   ========================================================================== */
+function viewSecurityCard() {
+  if (!Vault.available()) {
+    return `<section class="card sec-card"><h2>Password e cifratura</h2>
+      <p class="hint">La cifratura richiede che OsteoStudio sia aperto dal suo indirizzo https o dall’icona sulla schermata Home.</p></section>`;
+  }
+  if (!Lock.enabled) {
+    return `<section class="card sec-card"><h2>Password e cifratura</h2>
+      <p><span class="sec-status off">${ic('alert', 16)}Non attiva</span></p>
+      <p>Con la password attiva, OsteoStudio la chiede a ogni apertura e cifra con AES-256 tutti i dati salvati su questo iPad: anagrafiche, anamnesi, sedute, mappe del dolore e PDF.</p>
+      <div class="row-end" style="justify-content:flex-start"><button class="btn primary" data-action="lock-enable">${ic('lock', 18)}<span>Attiva password</span></button></div>
+      <p class="hint">La password non si può recuperare. Se la dimentichi potrai solo cancellare l’archivio e ripristinare un backup: esporta i backup con regolarità.</p>
+    </section>`;
+  }
+  const options = [1, 5, 15, 30].map((m) =>
+    `<option value="${m}" ${Lock.autoLockMin === m ? 'selected' : ''}>${m === 1 ? 'Dopo 1 minuto' : `Dopo ${m} minuti`}</option>`).join('');
+  return `<section class="card sec-card"><h2>Password e cifratura</h2>
+    <p><span class="sec-status">${ic('lock', 16)}Attiva</span></p>
+    <p class="muted">Archivio cifrato con AES-256-GCM. La chiave deriva dalla password (PBKDF2-SHA256, ${PBKDF2_ITERATIONS.toLocaleString('it-IT')} iterazioni) e resta solo in memoria finché l’app è sbloccata.</p>
+    <label class="field"><span>Blocco automatico per inattività o uscita dall’app</span><select id="autoLockSel">${options}</select></label>
+    <div class="row-end" style="justify-content:flex-start">
+      <button class="btn primary" data-action="lock-now">${ic('lock', 18)}<span>Blocca ora</span></button>
+      <button class="btn" data-action="lock-change">${ic('pen', 18)}<span>Cambia password</span></button>
+      <button class="btn danger" data-action="lock-disable">${ic('x', 18)}<span>Disattiva</span></button>
+    </div>
+  </section>`;
+}
+
+function viewSettings() {
+  const st = S.settings;
+  const themes = [['auto', 'Automatico', 'auto'], ['light', 'Chiaro', 'sun'], ['dark', 'Scuro', 'moon']];
+  return `<div class="page narrow">
+    <header class="page-head"><div><p class="date-line">Preferenze</p><h1>Impostazioni</h1></div></header>
+
+    <section class="card"><h2>Studio</h2>
+      <div class="form-grid">
+        <label class="field"><span>Nome dello studio</span><input type="text" data-bind="set.studioName" value="${esc(st.studioName)}" autocomplete="off"></label>
+        <label class="field"><span>Nome del professionista</span><input type="text" data-bind="set.therapistName" value="${esc(st.therapistName)}" placeholder="Es. Dott.ssa Bianchi" autocomplete="off"></label>
+        <label class="field"><span>Durata predefinita degli appuntamenti</span><select data-bind="set.defaultDuration">${[30, 45, 60, 75, 90].map((m) => `<option value="${m}" ${Number(st.defaultDuration) === m ? 'selected' : ''}>${m} minuti</option>`).join('')}</select></label>
+        <label class="field"><span>Primo orario della giornata</span><input type="time" data-bind="set.dayStart" value="${esc(st.dayStart)}" step="900"></label>
+      </div>
+    </section>
+
+    ${viewSecurityCard()}
+
+    <section class="card"><h2>Aspetto</h2>
+      <div class="seg" role="group" aria-label="Tema">${themes.map(([k, l, icon]) => `<button data-action="set-theme" data-theme="${k}" class="${st.theme === k ? 'on' : ''}">${ic(icon, 18)}<span>${l}</span></button>`).join('')}</div>
+      <p class="hint">“Automatico” segue il tema chiaro o scuro impostato su iPadOS.</p>
+    </section>
+
+    <section class="card"><h2>Apple Pencil</h2>
+      <div class="stack">
+        <label class="toggle"><input type="checkbox" data-bind="set.onlyPencil" ${st.onlyPencil ? 'checked' : ''}><span class="track"></span><span>Disegna solo con Apple Pencil (ignora il palmo e le dita)</span></label>
+        <label class="toggle"><input type="checkbox" data-bind="set.pressure" ${st.pressure ? 'checked' : ''}><span class="track"></span><span>Spessore del tratto sensibile alla pressione</span></label>
+      </div>
+    </section>
+
+    <section class="card"><h2>Uso offline su iPad</h2>
+      <ol class="steps">
+        <li>Apri OsteoStudio sempre dall’icona sulla schermata Home: funziona anche in modalità aereo e i dati restano solo su questo iPad.</li>
+        <li>I dati dell’icona Home sono separati da quelli di una scheda di Safari: non alternare i due modi di apertura.</li>
+        <li>Nessun dato viene inviato in rete: la Content Security Policy blocca ogni connessione verso altri siti.</li>
+        <li>Esporta un backup cifrato almeno una volta alla settimana sul disco SanDisk: è l’unica copia fuori dall’iPad.</li>
+      </ol>
+    </section>
+
+    <section class="card danger-zone"><h2>Cancella dati locali</h2>
+      <p>Elimina da questo iPad tutti i pazienti, le sedute, gli appuntamenti e i PDF. I file di backup già esportati non vengono toccati.</p>
+      <button class="btn danger" data-action="wipe-all">${ic('trash', 18)}<span>Cancella tutti i dati</span></button>
+    </section>
+    <p class="version">${APP.name} ${APP.version}. Funziona interamente offline: nessun dato lascia il dispositivo se non tramite i backup che esporti tu.</p>
+  </div>`;
+}
+
+/* ==========================================================================
+   18. SIDEBAR E ROUTER
+   ========================================================================== */
+const NAV = [
+  ['dashboard', 'Dashboard', 'home'],
+  ['agenda', 'Agenda', 'calendar'],
+  ['patients', 'Pazienti', 'users'],
+  ['backup', 'Backup', 'drive'],
+  ['settings', 'Impostazioni', 'settings']
+];
+
+function renderSidebar() {
+  const t = S.settings.theme;
+  const themeIcon = t === 'dark' ? 'moon' : t === 'light' ? 'sun' : 'auto';
+  const themeLabel = t === 'dark' ? 'Tema scuro' : t === 'light' ? 'Tema chiaro' : 'Tema automatico';
+  $('#sidebar').innerHTML = `
+    <div class="brand"><span class="brand-mark">${LOGO_SVG}</span><span class="brand-text"><strong>${esc(S.settings.studioName || APP.name)}</strong><span>${esc(S.settings.therapistName || 'Gestionale osteopatico')}</span></span></div>
+    <nav class="nav">${NAV.map(([k, label, icon]) => `<button class="nav-item" data-action="nav" data-view="${k}" aria-label="${label}">${ic(icon, 22)}<span>${label}</span>${k === 'patients' ? `<span class="count">${S.patients.size}</span>` : ''}</button>`).join('')}</nav>
+    <div class="sidebar-foot">
+      ${Lock.enabled ? `<button class="nav-item" data-action="lock-now" aria-label="Blocca ora">${ic('lock', 22)}<span>Blocca ora</span></button>` : ''}
+      <button class="nav-item" data-action="cycle-theme" aria-label="${themeLabel}">${ic(themeIcon, 22)}<span>${themeLabel}</span></button>
+      <div class="offline-badge"><i></i><span>Offline, dati sul dispositivo</span></div>
+    </div>`;
+  updateNav();
+}
+
+function updateNav() {
+  const active = S.view === 'session' ? 'patients' : S.view;
+  $$('#sidebar .nav-item[data-view]').forEach((b) => {
+    const on = b.dataset.view === active;
+    b.classList.toggle('active', on);
+    if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
+  const count = $('#sidebar .nav-item[data-view="patients"] .count');
+  if (count) count.textContent = S.patients.size;
+}
+
+const VIEWS = {
+  dashboard: viewDashboard,
+  agenda: viewAgenda,
+  patients: viewPatients,
+  session: viewSession,
+  backup: viewBackup,
+  settings: viewSettings
+};
+
+const MOUNTS = {
+  patients() {
+    const input = $('#patientSearch');
+    if (input) {
+      const onInput = () => { S.search = input.value; $('#patientList').innerHTML = patientListHTML(); };
+      input.addEventListener('input', onInput);
+    }
+    mountThumbs();
+  },
+  session() {
+    const s = S.sessions.get(S.sessionId);
+    if (s) PainMap.mount(s);
+    Saver.status(Saver.jobs.size ? 'saving' : 'saved');
+  },
+  backup() {
+    const enc = $('#expEncrypt');
+    if (enc) enc.addEventListener('change', () => { const box = $('#expPwBox'); if (box) box.hidden = !enc.checked; });
+    fillStorageInfo();
+  }
+};
+
+function render() {
+  runCleanups();
+  const main = $('#main');
+  const view = VIEWS[S.view] ? S.view : 'dashboard';
+  main.innerHTML = VIEWS[view]();
+  updateNav();
+  if (MOUNTS[view]) MOUNTS[view]();
+}
+
+async function go(view, { keepScroll = false } = {}) {
+  await Saver.flush();
+  S.view = view;
+  render();
+  if (!keepScroll) { const pg = $('#main .page'); if (pg) pg.scrollTop = 0; }
+}
+
+function openSession(id) {
+  if (!S.sessions.has(id)) { toast('Seduta non trovata', 'error'); return; }
+  S.sessionId = id;
+  go('session');
+}
+
+async function leaveSession() {
+  await Saver.flush();
+  const s = S.sessions.get(S.sessionId);
+  S.patientId = s ? s.patientId : S.patientId;
+  S.patientTab = 'diario';
+  S.sessionId = null;
+  go('patients');
+}
+
+/* ==========================================================================
+   19. MAPPA DEL DOLORE: disegno ad alta precisione con PointerEvents
+   ========================================================================== */
+const PainMap = {
+  api: null,
+
+  mount(session) {
+    const bg = $('#pmBg');
+    const cv = $('#pmDraw');
+    const cursor = $('#pmCursor');
+    const toolbar = $('#pmToolbar');
+    if (!bg || !cv) return;
+
+    bg.width = cv.width = PM_W;
+    bg.height = cv.height = PM_H;
+    const bctx = bg.getContext('2d');
+    const ctx = cv.getContext('2d', { willReadFrequently: true });
+    const redrawBg = () => drawBodyScene(bctx, PM_W, PM_H);
+    redrawBg();
+
+    if (session.painMap) {
+      const img = new Image();
+      img.onload = () => ctx.drawImage(img, 0, 0, PM_W, PM_H);
+      img.src = session.painMap;
+    }
+
+    const undo = [];
+    let drawing = false;
+    let activeId = null;
+    let activeType = 'pen';
+    let pts = [];
+    let lastW = 0;
+
+    const pushUndo = () => {
+      try {
+        undo.push(ctx.getImageData(0, 0, PM_W, PM_H));
+        if (undo.length > UNDO_LIMIT) undo.shift();
+      } catch (e) { console.error(e); }
+    };
+
+    const isBlank = () => {
+      const d = ctx.getImageData(0, 0, PM_W, PM_H).data;
+      for (let i = 3; i < d.length; i += 4) if (d[i] !== 0) return false;
+      return true;
+    };
+
+    const save = (delay = 600) => Saver.schedule('pm:' + session.id, async () => {
+      session.painMap = isBlank() ? '' : cv.toDataURL('image/png');
+      stamp(session);
+      await DB.put('sessions', session);
+    }, delay);
+
+    const toCanvas = (e) => {
+      const r = cv.getBoundingClientRect();
+      return {
+        x: ((e.clientX - r.left) * PM_W) / r.width,
+        y: ((e.clientY - r.top) * PM_H) / r.height,
+        p: e.pointerType === 'pen' ? (e.pressure > 0 ? e.pressure : 0.5) : 0.5
+      };
+    };
+
+    const widthFor = (p, type) => {
+      const base = S.pm.size * (S.pm.tool === 'eraser' ? 2.2 : 1);
+      if (S.settings.pressure && type === 'pen') return Math.max(0.8, base * (0.2 + 1.6 * p));
+      return base;
+    };
+
+    const applyStyle = () => {
+      ctx.globalCompositeOperation = S.pm.tool === 'eraser' ? 'destination-out' : 'source-over';
+      ctx.strokeStyle = S.pm.color;
+      ctx.fillStyle = S.pm.color;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    };
+
+    const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+
+    const startStroke = (pt) => {
+      pts = [pt];
+      lastW = widthFor(pt.p, activeType);
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, lastW / 2, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    const addPoint = (pt) => {
+      const prev = pts[pts.length - 1];
+      if (prev && Math.hypot(pt.x - prev.x, pt.y - prev.y) < 0.6) return;
+      pts.push(pt);
+      if (pts.length > 3) pts.shift();
+      const w = lastW * 0.55 + widthFor(pt.p, activeType) * 0.45;
+      ctx.lineWidth = w;
+      ctx.beginPath();
+      if (pts.length === 2) {
+        const m = mid(pts[0], pts[1]);
+        ctx.moveTo(pts[0].x, pts[0].y);
+        ctx.lineTo(m.x, m.y);
+      } else {
+        const [p0, p1, p2] = pts;
+        const m1 = mid(p0, p1);
+        const m2 = mid(p1, p2);
+        ctx.moveTo(m1.x, m1.y);
+        ctx.quadraticCurveTo(p1.x, p1.y, m2.x, m2.y);
+      }
+      ctx.stroke();
+      lastW = w;
+    };
+
+    const endStroke = () => {
+      if (pts.length >= 2) {
+        const a = pts[pts.length - 2];
+        const b = pts[pts.length - 1];
+        const m = mid(a, b);
+        ctx.lineWidth = lastW;
+        ctx.beginPath();
+        ctx.moveTo(m.x, m.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+      pts = [];
+      ctx.globalCompositeOperation = 'source-over';
+    };
+
+    const showCursor = (e) => {
+      if (e.pointerType === 'touch' || drawing) { cursor.classList.remove('show'); return; }
+      const r = cv.getBoundingClientRect();
+      const d = Math.max(4, (widthFor(0.5, 'mouse') * r.width) / PM_W);
+      cursor.style.width = cursor.style.height = `${d}px`;
+      cursor.style.transform = `translate(${e.clientX - r.left - d / 2}px, ${e.clientY - r.top - d / 2}px)`;
+      cursor.classList.add('show');
+    };
+
+    const onDown = (e) => {
+      if (S.settings.onlyPencil && e.pointerType === 'touch') return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (drawing) {
+        // Palm rejection: se la penna arriva mentre un tocco sta disegnando, il tratto del palmo viene annullato
+        if (e.pointerType === 'pen' && activeType === 'touch' && undo.length) {
+          ctx.putImageData(undo.pop(), 0, 0);
+          drawing = false;
+        } else {
+          return;
+        }
+      }
+      e.preventDefault();
+      try { cv.setPointerCapture(e.pointerId); } catch (err) { /* puntatore già rilasciato */ }
+      pushUndo();
+      drawing = true;
+      activeId = e.pointerId;
+      activeType = e.pointerType;
+      cursor.classList.remove('show');
+      applyStyle();
+      startStroke(toCanvas(e));
+    };
+
+    const onMove = (e) => {
+      if (!drawing) { showCursor(e); return; }
+      if (e.pointerId !== activeId) return;
+      e.preventDefault();
+      const events = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [];
+      (events.length ? events : [e]).forEach((ce) => addPoint(toCanvas(ce)));
+    };
+
+    const onUp = (e) => {
+      if (!drawing || e.pointerId !== activeId) return;
+      drawing = false;
+      activeId = null;
+      endStroke();
+      save();
+    };
+
+    const onLeave = () => cursor.classList.remove('show');
+    const block = (e) => e.preventDefault();
+
+    cv.addEventListener('pointerdown', onDown);
+    cv.addEventListener('pointermove', onMove);
+    cv.addEventListener('pointerup', onUp);
+    cv.addEventListener('pointercancel', onUp);
+    cv.addEventListener('pointerleave', onLeave);
+    cv.addEventListener('touchstart', block, { passive: false });
+    cv.addEventListener('touchmove', block, { passive: false });
+    cv.addEventListener('contextmenu', block);
+
+    const sizeInput = $('#pmSize');
+    const sizeVal = $('#pmSizeVal');
+    const sizeDot = $('#pmSizeDot');
+
+    const syncToolbar = () => {
+      $$('.swatch', toolbar).forEach((b) => {
+        const on = S.pm.tool === 'pen' && b.dataset.color === S.pm.color;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-checked', String(on));
+      });
+      $$('[data-pm="tool"]', toolbar).forEach((b) => b.classList.toggle('on', b.dataset.tool === S.pm.tool));
+      const r = cv.getBoundingClientRect();
+      const d = Math.max(3, Math.min(30, (widthFor(0.5, 'mouse') * (r.width || PM_W / 2)) / PM_W));
+      sizeDot.style.width = sizeDot.style.height = `${d}px`;
+      sizeDot.classList.toggle('eraser', S.pm.tool === 'eraser');
+      sizeDot.style.background = S.pm.tool === 'eraser' ? '' : S.pm.color;
+    };
+
+    const onToolbarClick = (e) => {
+      const b = e.target.closest('[data-pm]');
+      if (!b) return;
+      const kind = b.dataset.pm;
+      if (kind === 'color') { S.pm.color = b.dataset.color; S.pm.tool = 'pen'; syncToolbar(); }
+      else if (kind === 'tool') { S.pm.tool = b.dataset.tool; syncToolbar(); }
+      else if (kind === 'undo') {
+        if (!undo.length) { toast('Non ci sono tratti da annullare'); return; }
+        ctx.putImageData(undo.pop(), 0, 0);
+        save(300);
+      } else if (kind === 'clear') {
+        confirmDialog('Cancellare tutto il disegno di questa seduta? Potrai recuperarlo con “Annulla” finché resti nella seduta.', { title: 'Pulisci mappa', ok: 'Pulisci', danger: true })
+          .then((ok) => {
+            if (!ok) return;
+            pushUndo();
+            ctx.clearRect(0, 0, PM_W, PM_H);
+            save(0);
+          });
+      }
+    };
+    toolbar.addEventListener('click', onToolbarClick);
+
+    sizeInput.addEventListener('input', () => {
+      S.pm.size = Number(sizeInput.value);
+      sizeVal.textContent = sizeInput.value;
+      S.settings.brushSize = S.pm.size;
+      syncToolbar();
+      Saver.schedule('settings', saveSettings, 800);
+    });
+    $('#pmPressure').addEventListener('change', (e) => { S.settings.pressure = e.target.checked; syncToolbar(); Saver.schedule('settings', saveSettings); });
+    $('#pmPencil').addEventListener('change', (e) => {
+      S.settings.onlyPencil = e.target.checked;
+      Saver.schedule('settings', saveSettings);
+      toast(e.target.checked ? 'Disegno riservato ad Apple Pencil' : 'Disegno abilitato anche con le dita');
+    });
+
+    const onResize = () => syncToolbar();
+    window.addEventListener('resize', onResize);
+    requestAnimationFrame(syncToolbar);
+
+    this.api = { redrawBg };
+    addCleanup(() => {
+      window.removeEventListener('resize', onResize);
+      this.api = null;
+    });
+  }
+};
+
+/* ==========================================================================
+   20. PAZIENTI, SEDUTE E APPUNTAMENTI
+   ========================================================================== */
+function openNewPatientModal() {
+  Modal.open({
+    title: 'Nuovo paziente',
+    body: `<div class="form-grid">
+      <label class="field"><span>Nome</span><input type="text" id="npNome" autocomplete="off" autocapitalize="words"></label>
+      <label class="field"><span>Cognome</span><input type="text" id="npCognome" autocomplete="off" autocapitalize="words"></label>
+      <label class="field"><span>Data di nascita</span><input type="date" id="npNascita"></label>
+      <label class="field"><span>Telefono</span><input type="tel" id="npTel" autocomplete="off"></label>
+    </div><p class="hint">Gli altri dati si completano nella scheda del paziente.</p>`,
+    footer: `<span class="spacer"></span><button class="btn" data-modal-close>Annulla</button><button class="btn primary" data-m="create">${ic('check', 18)}<span>Crea scheda</span></button>`,
+    onMount(el, close) {
+      setTimeout(() => el.querySelector('#npNome').focus(), 80);
+      el.querySelector('[data-m="create"]').addEventListener('click', async () => {
+        const nome = el.querySelector('#npNome').value.trim();
+        const cognome = el.querySelector('#npCognome').value.trim();
+        if (!nome || !cognome) { toast('Inserisci nome e cognome', 'error'); return; }
+        const p = normalizePatient({
+          id: uid(), nome, cognome,
+          dataNascita: el.querySelector('#npNascita').value,
+          telefono: el.querySelector('#npTel').value.trim()
+        });
+        await DB.put('patients', p);
+        S.patients.set(p.id, p);
+        close();
+        S.patientId = p.id;
+        S.patientTab = 'anagrafica';
+        S.search = '';
+        await go('patients');
+        toast('Scheda paziente creata', 'ok');
+      });
+    }
+  });
+}
+
+function refreshPatientChrome(p) {
+  const name = $('#pHeadName'); if (name) name.textContent = fullName(p);
+  const meta = $('#pHeadMeta'); if (meta) meta.textContent = patientMetaLine(p);
+  const av = $('#pHeadAvatar'); if (av) av.textContent = initials(p);
+  const list = $('#patientList'); if (list) list.innerHTML = patientListHTML();
+}
+
+async function createSession(patientId, { date = null, appointmentId = null, open = true } = {}) {
+  const p = S.patients.get(patientId);
+  if (!p) { toast('Paziente non trovato', 'error'); return null; }
+  const now = nowISO();
+  let linked = appointmentId;
+  const day = date || todayISO();
+  if (!linked) {
+    const appt = [...S.appointments.values()].find((a) => a.patientId === patientId && a.date === day && a.status === 'pianificato'
+      && ![...S.sessions.values()].some((s) => s.appointmentId === a.id));
+    if (appt) {
+      linked = appt.id;
+      appt.status = 'eseguito';
+      stamp(appt);
+      await DB.put('appointments', appt);
+      toast(`Appuntamento delle ${appt.time} segnato come eseguito`, 'ok');
+    }
+  }
+  const s = normalizeSession({ id: uid(), patientId, date: day, appointmentId: linked, createdAt: now, updatedAt: now });
+  await DB.put('sessions', s);
+  S.sessions.set(s.id, s);
+  if (open) openSession(s.id);
+  return s;
+}
+
+function currentSession() { return S.sessions.get(S.sessionId) || null; }
+
+function findOverlap(rec) {
+  if (rec.status === 'annullato') return null;
+  const start = toMinutes(rec.time);
+  const end = start + Number(rec.duration || 0);
+  return [...S.appointments.values()].find((a) => a.id !== rec.id && a.date === rec.date && a.status !== 'annullato'
+    && toMinutes(a.time) < end && start < toMinutes(a.time) + Number(a.duration || 0)) || null;
+}
+
+function suggestTime(date) {
+  const list = [...S.appointments.values()].filter((a) => a.date === date && a.status !== 'annullato');
+  if (!list.length) return S.settings.dayStart || '09:00';
+  const lastEnd = Math.max(...list.map((a) => toMinutes(a.time) + Number(a.duration || 0)));
+  return fromMinutes(Math.min(lastEnd, 21 * 60));
+}
+
+function openApptModal(appt, defaults = {}) {
+  const patients = sortedPatients();
+  if (!patients.length) {
+    confirmDialog('Per pianificare un appuntamento serve almeno un paziente in archivio. Vuoi crearne uno adesso?', { title: 'Nessun paziente', ok: 'Nuovo paziente' })
+      .then((ok) => { if (ok) openNewPatientModal(); });
+    return;
+  }
+  const isNew = !appt;
+  const date = defaults.date || todayISO();
+  const a = appt ? { ...appt } : normalizeAppointment({
+    id: uid(),
+    patientId: defaults.patientId || (S.view === 'patients' && S.patientId) || '',
+    date,
+    time: suggestTime(date),
+    duration: Number(S.settings.defaultDuration) || 60,
+    type: 'Trattamento',
+    status: 'pianificato',
+    note: ''
+  });
+  const durations = [...new Set([20, 30, 45, 60, 75, 90, 120, Number(a.duration)])].sort((x, y) => x - y);
+
+  const body = `<div class="form-grid">
+      <label class="field wide"><span>Paziente</span><select id="apPatient"><option value="">Seleziona un paziente</option>
+        ${patients.map((p) => `<option value="${esc(p.id)}" ${p.id === a.patientId ? 'selected' : ''}>${esc(fullName(p))}</option>`).join('')}</select></label>
+      <label class="field"><span>Data</span><input type="date" id="apDate" value="${esc(a.date)}"></label>
+      <label class="field"><span>Ora</span><input type="time" id="apTime" value="${esc(a.time)}" step="300"></label>
+      <label class="field"><span>Durata</span><select id="apDur">${durations.map((m) => `<option value="${m}" ${Number(a.duration) === m ? 'selected' : ''}>${m} minuti</option>`).join('')}</select></label>
+      <label class="field"><span>Tipo</span><select id="apType">${[...new Set([...APPT_TYPES, a.type])].map((t) => `<option ${t === a.type ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></label>
+      <div class="field wide"><span>Stato</span><div class="seg full" id="apStatus" role="group">
+        ${Object.entries(APPT_STATUS).map(([k, v]) => `<button type="button" data-status="${k}" class="st-${k} ${a.status === k ? 'on' : ''}">${v.label}</button>`).join('')}</div></div>
+      <label class="field wide"><span>Note</span><textarea id="apNote" rows="3" placeholder="Note organizzative">${esc(a.note)}</textarea></label>
+    </div>
+    <p class="form-warn" id="apWarn" hidden></p>`;
+
+  const footer = `${!isNew ? `<button class="btn danger-ghost" data-m="del">${ic('trash', 18)}<span>Elimina</span></button>` : ''}
+    <span class="spacer"></span>
+    ${!isNew ? `<button class="btn" data-m="session">${ic('clipboard', 18)}<span>Registra seduta</span></button>` : ''}
+    <button class="btn primary" data-m="save">${ic('check', 18)}<span>${isNew ? 'Crea appuntamento' : 'Salva modifiche'}</span></button>`;
+
+  Modal.open({
+    title: isNew ? 'Nuovo appuntamento' : 'Appuntamento',
+    body,
+    footer,
+    onMount(el, close) {
+      let status = a.status;
+      const q = (s) => el.querySelector(s);
+
+      const collect = (silent = false) => {
+        const rec = {
+          ...a,
+          patientId: q('#apPatient').value,
+          date: q('#apDate').value,
+          time: q('#apTime').value,
+          duration: Number(q('#apDur').value),
+          type: q('#apType').value,
+          status,
+          note: q('#apNote').value.trim()
+        };
+        if (!silent) {
+          if (!rec.patientId) { toast('Seleziona il paziente', 'error'); return null; }
+          if (!rec.date || !rec.time) { toast('Indica data e ora', 'error'); return null; }
+        }
+        return rec;
+      };
+
+      const checkOverlap = () => {
+        const rec = collect(true);
+        const warn = q('#apWarn');
+        const other = rec.date && rec.time ? findOverlap(rec) : null;
+        if (other) {
+          warn.hidden = false;
+          warn.textContent = `Si sovrappone all’appuntamento di ${fullName(S.patients.get(other.patientId))} delle ${other.time}.`;
+        } else warn.hidden = true;
+      };
+
+      q('#apStatus').addEventListener('click', (e) => {
+        const b = e.target.closest('[data-status]');
+        if (!b) return;
+        status = b.dataset.status;
+        $$('#apStatus button', el).forEach((x) => x.classList.toggle('on', x === b));
+        checkOverlap();
+      });
+      ['#apDate', '#apTime', '#apDur'].forEach((s) => q(s).addEventListener('change', checkOverlap));
+      checkOverlap();
+
+      const persist = async (rec) => {
+        stamp(rec);
+        await DB.put('appointments', rec);
+        S.appointments.set(rec.id, rec);
+      };
+
+      q('[data-m="save"]').addEventListener('click', async () => {
+        const rec = collect();
+        if (!rec) return;
+        await persist(rec);
+        close();
+        render();
+        toast(isNew ? 'Appuntamento creato' : 'Appuntamento aggiornato', 'ok');
+      });
+
+      const del = q('[data-m="del"]');
+      if (del) del.addEventListener('click', async () => {
+        const ok = await confirmDialog('Eliminare definitivamente questo appuntamento?', { title: 'Elimina appuntamento', ok: 'Elimina', danger: true });
+        if (!ok) return;
+        await DB.delete('appointments', a.id);
+        S.appointments.delete(a.id);
+        close();
+        render();
+        toast('Appuntamento eliminato', 'ok');
+      });
+
+      const sess = q('[data-m="session"]');
+      if (sess) sess.addEventListener('click', async () => {
+        const rec = collect();
+        if (!rec) return;
+        rec.status = 'eseguito';
+        await persist(rec);
+        close();
+        const existing = [...S.sessions.values()].find((s) => s.appointmentId === rec.id);
+        if (existing) { openSession(existing.id); return; }
+        await createSession(rec.patientId, { date: rec.date, appointmentId: rec.id });
+      });
+    }
+  });
+}
+
+/* ==========================================================================
+   21. PDF DEI CONSENSI (Base64 in IndexedDB)
+   ========================================================================== */
+async function onPdfSelected(file) {
+  const target = S.pdfTarget;
+  S.pdfTarget = null;
+  if (!file || !target) return;
+  const p = S.patients.get(target.patientId);
+  if (!p) return;
+  const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+  if (!isPdf) { toast('Il file selezionato non è un PDF', 'error'); return; }
+  if (file.size > MAX_PDF_BYTES) { toast(`Il PDF supera il limite di ${fmtBytes(MAX_PDF_BYTES)}`, 'error'); return; }
+
+  const old = p.consensi[target.kind];
+  if (old) {
+    const ok = await confirmDialog(`Sostituire “${old.name}” con “${file.name}”? Il documento precedente verrà eliminato.`, { title: 'Sovrascrivi documento', ok: 'Sovrascrivi', danger: true });
+    if (!ok) return;
+  }
+
+  let dataUrl = await readAsDataURL(file);
+  dataUrl = 'data:application/pdf;base64,' + dataUrl.slice(dataUrl.indexOf(',') + 1);
+  const rec = {
+    id: uid(), patientId: p.id, kind: target.kind, name: file.name, mime: 'application/pdf',
+    size: file.size, dataUrl, uploadedAt: nowISO(), updatedAt: nowISO()
+  };
+  await DB.put('files', rec);
+  if (old && old.fileId) await DB.delete('files', old.fileId);
+  p.consensi[target.kind] = { fileId: rec.id, name: rec.name, size: rec.size, uploadedAt: rec.uploadedAt };
+  stamp(p);
+  await DB.put('patients', p);
+  if (S.view === 'patients') render();
+  toast(`${CONSENTS[target.kind].short} salvato`, 'ok');
+}
+
+async function viewPdf(kind) {
+  const p = S.patients.get(S.patientId);
+  const meta = p?.consensi[kind];
+  if (!meta) return;
+  const rec = await DB.get('files', meta.fileId);
+  if (!rec) { toast('Documento non trovato nel database', 'error'); return; }
+  const url = URL.createObjectURL(dataUrlToBlob(rec.dataUrl));
+  Modal.open({
+    title: CONSENTS[kind].short,
+    size: 'xl',
+    body: `<p class="muted">${esc(fullName(p))}: ${esc(rec.name)} (${esc(fmtBytes(rec.size))})</p>
+      <div class="pdf-frame"><iframe src="${url}" title="${esc(rec.name)}"></iframe></div>`,
+    footer: `<span class="spacer"></span>
+      <a class="btn" href="${url}" download="${esc(rec.name)}">${ic('download', 18)}<span>Scarica</span></a>
+      <a class="btn primary" href="${url}" target="_blank" rel="noopener">${ic('eye', 18)}<span>Apri a schermo intero</span></a>`,
+    onClose: () => setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000)
+  });
+}
+
+async function removePdf(kind) {
+  const p = S.patients.get(S.patientId);
+  const meta = p?.consensi[kind];
+  if (!meta) return;
+  const ok = await confirmDialog(`Rimuovere “${meta.name}” dalla scheda di ${fullName(p)}?`, { title: 'Rimuovi documento', ok: 'Rimuovi', danger: true });
+  if (!ok) return;
+  if (meta.fileId) await DB.delete('files', meta.fileId);
+  p.consensi[kind] = null;
+  stamp(p);
+  await DB.put('patients', p);
+  render();
+  toast('Documento rimosso', 'ok');
+}
+
+/* ==========================================================================
+   22. BACKUP: ESPORTAZIONE E IMPORTAZIONE
+   ========================================================================== */
+function backupFileName(encrypted) {
+  const d = new Date();
+  return `OsteoStudio_backup_${toISODate(d)}_${pad(d.getHours())}${pad(d.getMinutes())}${encrypted ? '_cifrato' : ''}.json`;
+}
+
+async function prepareExport(btn) {
+  const encrypt = !!$('#expEncrypt')?.checked;
+  const pw = $('#expPw')?.value || '';
+  const pw2 = $('#expPw2')?.value || '';
+  if (encrypt) {
+    if (!Vault.available()) { toast('La cifratura non è disponibile in questo contesto', 'error'); return; }
+    if (pw.length < 8) { toast('La password deve contenere almeno 8 caratteri', 'error'); return; }
+    if (pw !== pw2) { toast('Le due password non coincidono', 'error'); return; }
+  } else {
+    const ok = await confirmDialog('Il backup non cifrato contiene dati sanitari leggibili da chiunque abbia accesso al file. Continuare?', { title: 'Backup non cifrato', ok: 'Continua' });
+    if (!ok) return;
+  }
+  btn.disabled = true;
+  btn.querySelector('span').textContent = encrypt ? 'Cifratura in corso…' : 'Preparazione…';
+  try {
+    await Saver.flush();
+    const [patients, sessions, appointments, files] = await Promise.all([
+      DB.getAll('patients'), DB.getAll('sessions'), DB.getAll('appointments'), DB.getAll('files')
+    ]);
+    const payload = { patients, sessions, appointments, files, settings: { ...S.settings } };
+    const meta = {
+      app: APP.name, appVersion: APP.version, createdAt: nowISO(),
+      counts: { patients: patients.length, sessions: sessions.length, appointments: appointments.length, files: files.length }
+    };
+    const out = encrypt
+      ? { format: APP.backupFormat, version: APP.backupVersion, encrypted: true, meta, ...(await Vault.encrypt(JSON.stringify(payload), pw)) }
+      : { format: APP.backupFormat, version: APP.backupVersion, encrypted: false, meta, payload };
+    const blob = new Blob([JSON.stringify(out)], { type: 'application/json' });
+    S.exportReady = { blob, name: backupFileName(encrypt), size: blob.size, meta, encrypted: encrypt };
+    render();
+    toast('Backup pronto: scegli dove salvarlo', 'ok');
+  } catch (err) {
+    console.error(err);
+    toast('Preparazione del backup non riuscita: ' + (err?.message || err), 'error', 6000);
+    btn.disabled = false;
+    btn.querySelector('span').textContent = 'Prepara backup';
+  }
+}
+
+async function markBackupDone() {
+  S.settings.lastBackupAt = nowISO();
+  await saveSettings();
+}
+
+async function shareExport() {
+  const exp = S.exportReady;
+  if (!exp) return;
+  let file = null;
+  try { file = new File([exp.blob], exp.name, { type: 'application/json' }); } catch (e) { file = null; }
+  if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: exp.name });
+      await markBackupDone();
+      toast('Backup salvato', 'ok');
+      render();
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      toast('Condivisione non disponibile: uso il download', 'info');
+      downloadExport();
+    }
+  } else {
+    downloadExport();
+  }
+}
+
+function downloadExport() {
+  const exp = S.exportReady;
+  if (!exp) return;
+  const url = URL.createObjectURL(exp.blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = exp.name;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 120000);
+  markBackupDone().then(() => { if (S.view === 'backup') render(); });
+  toast('Download avviato: trovi il file nella cartella Download', 'ok', 4500);
+}
+
+async function onImportSelected(file) {
+  if (!file) return;
+  let json;
+  try {
+    json = JSON.parse(await readAsText(file));
+  } catch (err) {
+    toast('Il file non è un JSON valido', 'error');
+    return;
+  }
+  if (!json || json.format !== APP.backupFormat) { toast('Il file non è un backup di OsteoStudio', 'error'); return; }
+  if (json.encrypted && !(json.kdf && json.cipher && json.data)) { toast('Il backup cifrato è incompleto o danneggiato', 'error'); return; }
+  S.pendingImport = { name: file.name, size: file.size, json };
+  render();
+}
+
+function validPayload(p) {
+  return p && ['patients', 'sessions', 'appointments', 'files'].every((k) => Array.isArray(p[k]))
+    && p.patients.every((x) => x && typeof x.id === 'string');
+}
+
+async function mergePayload(payload) {
+  const newer = (cache, list) => list.filter((r) => {
+    const cur = cache.get(r.id);
+    return !cur || (r.updatedAt || '') > (cur.updatedAt || '');
+  });
+  await DB.putMany('patients', newer(S.patients, payload.patients).map(normalizePatient));
+  await DB.putMany('sessions', newer(S.sessions, payload.sessions).map(normalizeSession));
+  await DB.putMany('appointments', newer(S.appointments, payload.appointments).map(normalizeAppointment));
+  for (const f of payload.files) {
+    const exists = await DB.get('files', f.id);
+    if (!exists) await DB.put('files', f);
+  }
+}
+
+async function runImport(btn) {
+  const imp = S.pendingImport;
+  if (!imp) return;
+  const mode = $('input[name="impMode"]:checked')?.value || 'merge';
+  let payload;
+  try {
+    if (imp.json.encrypted) {
+      if (!Vault.available()) { toast('La decifratura non è disponibile in questo contesto', 'error'); return; }
+      const pw = $('#impPw')?.value || '';
+      if (!pw) { toast('Inserisci la password del backup', 'error'); return; }
+      btn.disabled = true;
+      btn.querySelector('span').textContent = 'Decifratura…';
+      payload = JSON.parse(await Vault.decrypt(imp.json, pw));
+    } else {
+      payload = imp.json.payload;
+    }
+  } catch (err) {
+    toast('Password errata o file danneggiato', 'error', 5000);
+    btn.disabled = false;
+    btn.querySelector('span').textContent = 'Importa backup';
+    return;
+  }
+  btn.disabled = false;
+  btn.querySelector('span').textContent = 'Importa backup';
+  if (!validPayload(payload)) { toast('Il contenuto del backup non è valido', 'error'); return; }
+
+  const message = mode === 'replace'
+    ? `Tutti i dati presenti su questo iPad verranno sostituiti con il backup (${plural(payload.patients.length, 'paziente', 'pazienti')}, ${plural(payload.sessions.length, 'seduta', 'sedute')}). Continuare?`
+    : `I dati del backup verranno uniti a quelli presenti (${plural(payload.patients.length, 'paziente', 'pazienti')}, ${plural(payload.sessions.length, 'seduta', 'sedute')}). Continuare?`;
+  const ok = await confirmDialog(message, { title: 'Importa backup', ok: 'Importa', danger: mode === 'replace' });
+  if (!ok) return;
+
+  try {
+    await Saver.flush();
+    if (mode === 'replace') {
+      await DB.replaceAll({
+        patients: payload.patients.map(normalizePatient),
+        sessions: payload.sessions.map(normalizeSession),
+        appointments: payload.appointments.map(normalizeAppointment),
+        files: payload.files,
+        settings: { ...S.settings, ...(payload.settings || {}), lastBackupAt: S.settings.lastBackupAt }
+      });
+    } else {
+      await mergePayload(payload);
+    }
+    await loadAll();
+    S.pendingImport = null;
+    S.patientId = null;
+    S.sessionId = null;
+    applyTheme();
+    renderSidebar();
+    render();
+    toast('Backup importato correttamente', 'ok');
+  } catch (err) {
+    console.error(err);
+    toast('Importazione non riuscita: ' + (err?.message || err), 'error', 6000);
+  }
+}
+
+async function fillStorageInfo() {
+  const used = $('#stUsed');
+  const pers = $('#stPersist');
+  if (!used || !pers) return;
+  try {
+    if (navigator.storage && navigator.storage.estimate) {
+      const e = await navigator.storage.estimate();
+      used.textContent = fmtBytes(e.usage || 0);
+    } else used.textContent = 'Non disponibile';
+    if (navigator.storage && navigator.storage.persisted) {
+      pers.textContent = (await navigator.storage.persisted()) ? 'Attiva' : 'Non attiva';
+    } else pers.textContent = 'Non supportata';
+  } catch (e) {
+    used.textContent = 'Non disponibile';
+    pers.textContent = 'Non disponibile';
+  }
+}
+
+/* ==========================================================================
+   23. TEMA E ICONA DELLA SCHERMATA HOME
+   ========================================================================== */
+function applyTheme() {
+  const t = S.settings.theme;
+  const root = document.documentElement;
+  if (t === 'light' || t === 'dark') root.setAttribute('data-theme', t);
+  else root.removeAttribute('data-theme');
+  requestAnimationFrame(() => {
+    const meta = $('#metaTheme');
+    if (meta) meta.setAttribute('content', themeColor('--bg'));
+    if (PainMap.api) PainMap.api.redrawBg();
+    if ($('canvas[data-thumb]')) mountThumbs();
+  });
+}
+
+function installTouchIcon() {
+  // Se l'app è installata con le icone PNG (versione web), non serve l'icona generata.
+  if (document.querySelector('link[rel="apple-touch-icon"][href$=".png"]') && location.protocol !== 'file:') return;
+  try {
+    const c = document.createElement('canvas');
+    c.width = c.height = 180;
+    const x = c.getContext('2d');
+    const g = x.createLinearGradient(0, 0, 180, 180);
+    g.addColorStop(0, '#2f7a6c');
+    g.addColorStop(1, '#1f5249');
+    x.fillStyle = g;
+    x.fillRect(0, 0, 180, 180);
+    x.fillStyle = '#ffffff';
+    const rr = (px, py, w, h, r) => {
+      x.beginPath();
+      x.moveTo(px + r, py);
+      x.arcTo(px + w, py, px + w, py + h, r);
+      x.arcTo(px + w, py + h, px, py + h, r);
+      x.arcTo(px, py + h, px, py, r);
+      x.arcTo(px, py, px + w, py, r);
+      x.closePath();
+      x.fill();
+    };
+    [[60, 30], [55, 58], [52, 86], [56, 114]].forEach(([px, py], i) => rr(px, py, 180 - px * 2, 20, 10 - i));
+    x.beginPath(); x.moveTo(68, 142); x.lineTo(112, 142); x.lineTo(90, 158); x.closePath(); x.fill();
+    const href = c.toDataURL('image/png');
+    [['apple-touch-icon', null], ['icon', 'image/png']].forEach(([rel, type]) => {
+      const link = document.createElement('link');
+      link.rel = rel;
+      if (type) link.type = type;
+      link.href = href;
+      document.head.appendChild(link);
+    });
+  } catch (e) { /* icona facoltativa */ }
+}
+
+/* ==========================================================================
+   23b. PASSWORD DELL'APP
+   ========================================================================== */
+function openPasswordModal(mode) {
+  const titles = { enable: 'Attiva password e cifratura', change: 'Cambia password', disable: 'Disattiva password' };
+  const needOld = mode !== 'enable';
+  const needNew = mode !== 'disable';
+  const pwInput = (id, label) =>
+    `<label class="field"><span>${label}</span><input type="password" id="${id}" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></label>`;
+  const body = `<div class="stack">
+    ${mode === 'enable' ? '<p>Scegli una password di almeno 8 caratteri e annotala in un luogo sicuro: <strong>non esiste modo di recuperarla</strong>. Tutti i dati di questo iPad verranno cifrati.</p>' : ''}
+    ${mode === 'change' ? '<p>L’intero archivio verrà cifrato di nuovo con la nuova password.</p>' : ''}
+    ${mode === 'disable' ? '<p>I dati torneranno salvati senza cifratura su questo iPad e l’app non chiederà più la password.</p>' : ''}
+    ${needOld ? pwInput('pwOld', mode === 'disable' ? 'Password' : 'Password attuale') : ''}
+    ${needNew ? pwInput('pwNew', 'Nuova password') + pwInput('pwNew2', 'Ripeti la nuova password') : ''}
+    <p class="lock-msg" id="pwMsg" role="alert"></p>
+  </div>`;
+  const okLabel = mode === 'enable' ? 'Attiva e cifra' : mode === 'change' ? 'Cambia password' : 'Disattiva';
+  const footer = `<button class="btn" data-modal-close>Annulla</button>
+    <button class="btn ${mode === 'disable' ? 'danger' : 'primary'}" id="pwOk">${okLabel}</button>`;
+  Modal.open({
+    title: titles[mode],
+    body,
+    footer,
+    onMount(el, close) {
+      const q = (s) => el.querySelector(s);
+      const msg = q('#pwMsg');
+      const ok = q('#pwOk');
+      setTimeout(() => { const first = el.querySelector('input'); if (first) first.focus(); }, 80);
+      el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); ok.click(); } });
+      ok.addEventListener('click', async () => {
+        const oldPw = q('#pwOld') ? q('#pwOld').value : '';
+        const n1 = q('#pwNew') ? q('#pwNew').value : '';
+        const n2 = q('#pwNew2') ? q('#pwNew2').value : '';
+        msg.classList.remove('info');
+        if (needOld && !oldPw) { msg.textContent = 'Inserisci la password attuale.'; return; }
+        if (needNew && n1.length < 8) { msg.textContent = 'La nuova password deve avere almeno 8 caratteri.'; return; }
+        if (needNew && n1 !== n2) { msg.textContent = 'Le due password non coincidono.'; return; }
+        ok.disabled = true;
+        msg.classList.add('info');
+        msg.textContent = mode === 'disable' ? 'Decifratura dell’archivio in corso…' : 'Cifratura dell’archivio in corso…';
+        try {
+          await Saver.flush();
+          if (mode === 'enable') await Lock.enable(n1);
+          else if (mode === 'change') await Lock.change(oldPw, n1);
+          else await Lock.disable(oldPw);
+          close();
+          renderSidebar();
+          render();
+          toast(mode === 'enable' ? 'Password attivata: l’archivio è cifrato'
+            : mode === 'change' ? 'Password cambiata' : 'Password disattivata', 'ok', 4500);
+        } catch (err) {
+          console.error(err);
+          ok.disabled = false;
+          msg.classList.remove('info');
+          msg.textContent = err?.message || 'Operazione non riuscita.';
+        }
+      });
+    }
+  });
+}
+
+/* ==========================================================================
+   23c. USO OFFLINE (service worker per l'app installata sulla schermata Home)
+   ========================================================================== */
+function registerServiceWorker() {
+  const secure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  if (!('serviceWorker' in navigator) || !secure || registerServiceWorker.done) return;
+  registerServiceWorker.done = true;
+  let hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController) toast('Nuova versione di OsteoStudio installata: sarà attiva alla prossima apertura.', 'info', 6000);
+    hadController = true;
+  });
+  navigator.serviceWorker.register('./sw.js').catch((err) => console.warn('Service worker non registrato', err));
+}
+
+/* ==========================================================================
+   24. AZIONI (delegazione eventi)
+   ========================================================================== */
+const ACTIONS = {
+  nav: (el) => go(el.dataset.view),
+
+  'cycle-theme': async () => {
+    const order = ['auto', 'light', 'dark'];
+    S.settings.theme = order[(order.indexOf(S.settings.theme) + 1) % order.length];
+    applyTheme();
+    renderSidebar();
+    await saveSettings();
+    if (S.view === 'settings') render();
+  },
+
+  'set-theme': async (el) => {
+    S.settings.theme = el.dataset.theme;
+    applyTheme();
+    renderSidebar();
+    await saveSettings();
+    render();
+  },
+
+  'new-patient': () => openNewPatientModal(),
+
+  'select-patient': async (el) => {
+    await Saver.flush();
+    if (S.patientId !== el.dataset.id) S.patientTab = 'anagrafica';
+    S.patientId = el.dataset.id;
+    render();
+    const pane = $('.detail-pane'); if (pane) pane.scrollTop = 0;
+  },
+
+  'back-to-list': async () => { await Saver.flush(); S.patientId = null; render(); },
+
+  'patient-tab': async (el) => { await Saver.flush(); S.patientTab = el.dataset.tab; render(); },
+
+  'new-session': (el) => createSession(el.dataset.patient),
+
+  'open-session': (el) => openSession(el.dataset.id),
+
+  'back-from-session': () => leaveSession(),
+
+  'delete-session': async () => {
+    const s = currentSession();
+    if (!s) return;
+    const ok = await confirmDialog(`Eliminare la seduta del ${fmtDate(s.date, 'medium')} con la relativa mappa del dolore? L’operazione non è reversibile.`, { title: 'Elimina seduta', ok: 'Elimina', danger: true });
+    if (!ok) return;
+    Saver.jobs.delete('pm:' + s.id);
+    Saver.jobs.delete('session:' + s.id);
+    await DB.delete('sessions', s.id);
+    S.sessions.delete(s.id);
+    S.patientId = s.patientId;
+    S.patientTab = 'diario';
+    S.sessionId = null;
+    await go('patients');
+    toast('Seduta eliminata', 'ok');
+  },
+
+  'delete-patient': async () => {
+    const p = S.patients.get(S.patientId);
+    if (!p) return;
+    const sIds = sessionsOf(p.id).map((s) => s.id);
+    const aIds = appointmentsOf(p.id).map((a) => a.id);
+    const ok = await confirmDialog(`Eliminare definitivamente la scheda di ${fullName(p)}?\nVerranno eliminati anche ${plural(sIds.length, 'seduta', 'sedute')}, ${plural(aIds.length, 'appuntamento', 'appuntamenti')} e i PDF dei consensi.`, { title: 'Elimina paziente', ok: 'Elimina', danger: true });
+    if (!ok) return;
+    await Saver.flush();
+    await DB.deleteMany('sessions', sIds);
+    await DB.deleteMany('appointments', aIds);
+    await DB.deleteByIndex('files', 'patientId', p.id);
+    await DB.delete('patients', p.id);
+    sIds.forEach((id) => S.sessions.delete(id));
+    aIds.forEach((id) => S.appointments.delete(id));
+    S.patients.delete(p.id);
+    S.patientId = null;
+    render();
+    toast('Paziente eliminato', 'ok');
+  },
+
+  'new-appt': (el) => openApptModal(null, { date: el.dataset.date, patientId: el.dataset.patient }),
+
+  'edit-appt': (el) => {
+    const a = S.appointments.get(el.dataset.id);
+    if (a) openApptModal(a);
+  },
+
+  'appt-status': async (el) => {
+    const a = S.appointments.get(el.dataset.id);
+    if (!a) return;
+    a.status = el.dataset.status;
+    stamp(a);
+    await DB.put('appointments', a);
+    render();
+    toast(`Appuntamento segnato come ${APPT_STATUS[a.status].label.toLowerCase()}`, 'ok');
+  },
+
+  'week-prev': () => { S.weekStart = addDays(S.weekStart, -7); render(); },
+  'week-next': () => { S.weekStart = addDays(S.weekStart, 7); render(); },
+  'week-today': () => { S.weekStart = startOfWeek(new Date()); render(); },
+  'agenda-mode': (el) => { S.agendaMode = el.dataset.mode; render(); },
+
+  'set-vas': (el) => {
+    const s = currentSession();
+    if (!s) return;
+    const v = Number(el.dataset.v);
+    s.vas = s.vas === v ? null : v;
+    stamp(s);
+    Saver.schedule('session:' + s.id, () => DB.put('sessions', s), 250);
+    $$('.vas-btn').forEach((b) => {
+      const on = Number(b.dataset.v) === s.vas;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-checked', String(on));
+    });
+    const lbl = $('#vasLabel'); if (lbl) lbl.textContent = vasLabel(s.vas);
+  },
+
+  'tech-toggle': (el) => {
+    const s = currentSession();
+    if (!s) return;
+    const { cat, item } = el.dataset;
+    const list = s.tecniche[cat];
+    const i = list.indexOf(item);
+    if (i >= 0) list.splice(i, 1); else list.push(item);
+    const on = i < 0;
+    el.classList.toggle('on', on);
+    el.setAttribute('aria-pressed', String(on));
+    const counter = $('#tc-' + cat);
+    if (counter) { counter.textContent = list.length; counter.classList.toggle('has', list.length > 0); }
+    stamp(s);
+    Saver.schedule('session:' + s.id, () => DB.put('sessions', s), 300);
+  },
+
+  'pdf-upload': (el) => {
+    S.pdfTarget = { patientId: S.patientId, kind: el.dataset.kind };
+    const input = $('#pdfInput');
+    input.value = '';
+    input.click();
+  },
+  'pdf-view': (el) => viewPdf(el.dataset.kind),
+  'pdf-remove': (el) => removePdf(el.dataset.kind),
+
+  'export-prepare': (el) => prepareExport(el),
+  'export-share': () => shareExport(),
+  'export-download': () => downloadExport(),
+  'export-discard': () => { S.exportReady = null; render(); },
+
+  'import-pick': () => { const input = $('#importInput'); input.value = ''; input.click(); },
+  'import-run': (el) => runImport(el),
+  'import-cancel': () => { S.pendingImport = null; render(); },
+
+  'request-persist': async () => {
+    if (!navigator.storage || !navigator.storage.persist) { toast('Il browser non supporta l’archiviazione persistente', 'error'); return; }
+    const granted = await navigator.storage.persist();
+    toast(granted ? 'Archiviazione persistente attiva' : 'Richiesta non accolta: aggiungi l’app alla schermata Home e riprova', granted ? 'ok' : 'info', 5000);
+    fillStorageInfo();
+  },
+
+  'lock-enable': () => openPasswordModal('enable'),
+  'lock-change': () => openPasswordModal('change'),
+  'lock-disable': () => openPasswordModal('disable'),
+  'lock-now': () => Lock.lockNow(),
+
+  'wipe-all': async () => {
+    const first = await confirmDialog('Vuoi cancellare tutti i dati di OsteoStudio da questo iPad?', { title: 'Cancella dati locali', ok: 'Continua', danger: true });
+    if (!first) return;
+    const second = await confirmDialog('Conferma definitiva: i dati non esportati in un backup andranno persi per sempre.', { title: 'Ultima conferma', ok: 'Cancella tutto', danger: true });
+    if (!second) return;
+    Saver.jobs.clear();
+    await DB.replaceAll({ patients: [], sessions: [], appointments: [], files: [], settings: { ...DEFAULT_SETTINGS } });
+    await loadAll();
+    S.patientId = null;
+    S.sessionId = null;
+    S.exportReady = null;
+    S.pendingImport = null;
+    applyTheme();
+    renderSidebar();
+    await go('dashboard');
+    toast('Tutti i dati locali sono stati cancellati', 'ok');
+  }
+};
+
+/* Campi con autosalvataggio: data-bind="ambito.campo" */
+function handleBind(el) {
+  const [scope, field] = el.dataset.bind.split('.');
+  const value = el.type === 'checkbox' ? el.checked : el.value;
+
+  if (scope === 'p' || scope === 'a') {
+    const p = S.patients.get(S.patientId);
+    if (!p) return;
+    if (scope === 'p') p[field] = field === 'codiceFiscale' ? String(value).toUpperCase() : value;
+    else p.anamnesi[field] = value;
+    stamp(p);
+    Saver.schedule('patient:' + p.id, () => DB.put('patients', p));
+    if (scope === 'p' && ['nome', 'cognome', 'dataNascita', 'telefono'].includes(field)) refreshPatientChrome(p);
+  } else if (scope === 's') {
+    const s = currentSession();
+    if (!s) return;
+    s[field] = value;
+    stamp(s);
+    Saver.schedule('session:' + s.id, () => DB.put('sessions', s));
+    if (field === 'date') {
+      const t = $('#sessionTitle');
+      if (t) t.textContent = `Seduta del ${fmtDate(value, 'medium')}`;
+    }
+  } else if (scope === 'set') {
+    S.settings[field] = field === 'defaultDuration' ? Number(value) : value;
+    Saver.schedule('settings', saveSettings);
+    if (field === 'studioName' || field === 'therapistName') {
+      const brand = $('#sidebar .brand-text');
+      if (brand) brand.innerHTML = `<strong>${esc(S.settings.studioName || APP.name)}</strong><span>${esc(S.settings.therapistName || 'Gestionale osteopatico')}</span>`;
+    }
+  }
+}
+
+function bindGlobalEvents() {
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-action]');
+    if (!el) return;
+    const fn = ACTIONS[el.dataset.action];
+    if (!fn) return;
+    e.preventDefault();
+    try {
+      Promise.resolve(fn(el, e)).catch((err) => { console.error(err); toast(err?.message || 'Operazione non riuscita', 'error', 5000); });
+    } catch (err) {
+      console.error(err);
+      toast(err?.message || 'Operazione non riuscita', 'error', 5000);
+    }
+  });
+
+  const onField = (e) => {
+    const el = e.target.closest && e.target.closest('[data-bind]');
+    if (el) handleBind(el);
+  };
+  document.addEventListener('input', onField);
+  document.addEventListener('change', onField);
+
+  $('#pdfInput').addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    onPdfSelected(f).catch((err) => { console.error(err); toast('Caricamento del PDF non riuscito: ' + (err?.message || err), 'error', 6000); });
+  });
+  $('#importInput').addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    onImportSelected(f).catch((err) => { console.error(err); toast('Lettura del backup non riuscita', 'error'); });
+  });
+
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && Modal.stack.length) Modal.close(); });
+
+  const flushNow = () => { Saver.flush(); };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushNow(); });
+  window.addEventListener('pagehide', flushNow);
+  window.addEventListener('beforeunload', flushNow);
+
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  const onScheme = () => { if (S.settings.theme === 'auto') applyTheme(); };
+  if (mq.addEventListener) mq.addEventListener('change', onScheme); else if (mq.addListener) mq.addListener(onScheme);
+
+  // Evita il pinch-zoom di Safari che interferisce con il disegno
+  document.addEventListener('gesturestart', (e) => e.preventDefault());
+
+  // Aggiorna la dashboard al cambio di giorno
+  let lastDay = todayISO();
+  setInterval(() => {
+    const d = todayISO();
+    if (d !== lastDay) { lastDay = d; if (S.view === 'dashboard') render(); }
+  }, 60000);
+}
+
+/* ==========================================================================
+   25. AVVIO
+   ========================================================================== */
+function showFatal(err) {
+  $('#main').innerHTML = `<div class="page"><div class="fatal">
+    <h1>Archivio non disponibile</h1>
+    <p class="muted">${esc(err?.message || String(err))}</p>
+    <p class="hint">Verifica che Safari non sia in navigazione privata e che OsteoStudio sia aperto dall’icona sulla schermata Home (o dal suo indirizzo https), non dall’anteprima di app File. Poi ricarica la pagina.</p>
+    <div class="row-end" style="justify-content:flex-start"><button class="btn primary" onclick="location.reload()">Ricarica</button></div>
+  </div></div>`;
+}
+
+async function init() {
+  installTouchIcon();
+  renderSidebar();
+  try {
+    await DB.open();
+    await Lock.loadConfig();
+    if (Lock.enabled) {
+      if (!Vault.available()) throw new Error('L’archivio è cifrato ma questo browser non offre la crittografia necessaria. Apri OsteoStudio dall’icona sulla schermata Home.');
+      registerServiceWorker();
+      await LockScreen.show();
+    }
+    await loadAll();
+  } catch (err) {
+    console.error(err);
+    showFatal(err);
+    return;
+  }
+  applyTheme();
+  renderSidebar();
+  bindGlobalEvents();
+  Lock.bindAutoLock();
+  registerServiceWorker();
+  render();
+
+  try {
+    if (navigator.storage && navigator.storage.persisted && !(await navigator.storage.persisted()) && navigator.storage.persist) {
+      await navigator.storage.persist();
+    }
+  } catch (e) { /* non bloccante */ }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

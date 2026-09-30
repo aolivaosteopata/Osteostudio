@@ -1,0 +1,16 @@
+{
+  "name": "OsteoStudio",
+  "short_name": "OsteoStudio",
+  "description": "Gestionale per studio osteopatico, offline",
+  "lang": "it",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#edf1ef",
+  "theme_color": "#2c6e63",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
