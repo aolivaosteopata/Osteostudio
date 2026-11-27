@@ -1,7 +1,7 @@
 /* OsteoStudio 3 – gestionale osteopatico offline per iPad.
    Tutti i dati restano nel database locale (IndexedDB) del dispositivo. */
 'use strict';
-const APP = { name: 'OsteoStudio', version: '3.3.0', db: 'osteostudio3', dbVersion: 1 };
+const APP = { name: 'OsteoStudio', version: '3.4.0', db: 'osteostudio3', dbVersion: 1 };
 const STORES = ['patients', 'cycles', 'sessions', 'consents'];
 
 /* =====================================================================
@@ -151,7 +151,16 @@ const cycleLast = (c) => S.sessions.reduce((m, s) => (s.cycleId === c.id && s.da
 const cyclesOf = (pid) => S.cycles.filter((c) => c.patientId === pid).sort((a, b) => cycleLast(b).localeCompare(cycleLast(a)) || (b.createdAt || '').localeCompare(a.createdAt || ''));
 const sessionsOfCycle = (cid) => S.sessions.filter((s) => s.cycleId === cid).sort(byDateDesc);
 const consentsOf = (pid) => S.consents.filter((c) => c.patientId === pid).sort((a, b) => b.date.localeCompare(a.date));
-const unpaidOf = (pid) => S.sessions.filter((s) => s.patientId === pid && s.fee > 0 && !s.paid);
+// Seduta con compenso (non gratuita e con importo): è quella che conta per incassi e fatture
+const billable = (s) => !s.free && s.fee > 0;
+const unpaidOf = (pid) => S.sessions.filter((s) => s.patientId === pid && billable(s) && !s.paid);
+const uninvoicedOf = (pid) => S.sessions.filter((s) => (!pid || s.patientId === pid) && billable(s) && !s.invoiced);
+/* Il paziente ha acconsentito all'uso anonimo dei dati per la didattica nell'ultimo consenso firmato? */
+function didacticConsent(pid) {
+  const c = consentsOf(pid)[0];
+  const o = c?.opts?.find((x) => /didattic|anonim/i.test(x.label));
+  return o ? o.ok : null; // null = nessun consenso registrato
+}
 const sum = (arr) => arr.reduce((t, s) => t + (Number(s.fee) || 0), 0);
 function sessionNumber(s) {
   const list = sessionsOfCycle(s.cycleId).slice().reverse();
@@ -498,8 +507,10 @@ function vasChart(list) {
 }
 function vasBadge(v) { return v == null ? '<span class="vas none">—</span>' : `<span class="vas" style="background:${vasColor(v)}">${v}</span>`; }
 function payChip(s) {
+  if (s.free) return '<span class="chip accent">Gratuita · caso clinico</span>';
   if (!(s.fee > 0)) return '';
-  return s.paid ? `<span class="chip ok">${eur(s.fee)}</span>` : `<span class="chip warn">${eur(s.fee)} da saldare</span>`;
+  return (s.paid ? `<span class="chip ok">${eur(s.fee)}</span>` : `<span class="chip warn">${eur(s.fee)} da saldare</span>`)
+    + (s.invoiced ? '' : ' <span class="chip warn">da fatturare</span>');
 }
 function tabSessions(tab, p) {
   const cycles = cyclesOf(p.id);
@@ -686,7 +697,7 @@ function openSession(sid, isNew = false) {
   el.className = 'full';
   let pane = 'hist', mapEd = null;
   // Prezzo applicato a questo paziente nella seduta precedente (promemoria, i prezzi variano da paziente a paziente)
-  const prevPaid = S.sessions.filter((x) => x.patientId === s.patientId && x.id !== s.id && x.fee > 0)
+  const prevPaid = S.sessions.filter((x) => x.patientId === s.patientId && x.id !== s.id && billable(x))
     .sort(byDateDesc).filter((x, _, a) => x.date <= s.date || a.every((y) => y.date > s.date));
   const last = prevPaid.length ? prevPaid[0].fee : null;
   const saver = debounce(() => save('sessions', s), 350);
@@ -706,11 +717,7 @@ function openSession(sid, isNew = false) {
           <div class="vasrow">${Array.from({ length: 11 }, (_, i) => `<button data-vas="${i}" style="color:${vasColor(i)}" class="${s.vas === i ? 'on' : ''}">${i}</button>`).join('')}</div></div>
         <label class="field grow" style="display:flex"><span>Note della seduta</span>
           <textarea class="textarea notes" data-f="text" placeholder="Valutazione, test, trattamento eseguito, risposta del paziente, indicazioni…">${esc(s.text)}</textarea></label>
-        <div class="payrow">
-          <label class="field"><span class="row" style="gap:8px">Importo €${last != null ? `<button type="button" class="lastfee" data-x="lastfee" title="Prezzo dell'ultima seduta: tocca per usarlo">${String(last).replace('.', ',')}</button>` : ''}</span><input class="input" data-f="fee" inputmode="decimal" value="${s.fee ?? ''}" placeholder="0"></label>
-          <label class="field"><span>Metodo</span><div class="seg" data-method>${Object.entries(METHODS).map(([k, l]) => `<button data-m="${k}" class="${s.method === k ? 'on' : ''}">${l.split(' ')[0]}</button>`).join('')}</div></label>
-          <button class="toggle${s.paid ? ' on' : ''}" data-x="paid"><span class="sw"></span>Pagata</button>
-        </div>
+        <div data-payblock></div>
       </div>
       <div class="ed-right">
         <div class="seg"><button data-pane="hist" class="on">Storico del ciclo</button><button data-pane="map">Mappa corporea${s.strokes?.length ? ' •' : ''}</button></div>
@@ -718,6 +725,26 @@ function openSession(sid, isNew = false) {
       </div>
     </div>`;
 
+  function payBlockHTML() {
+    if (s.free) {
+      const dc = didacticConsent(p.id);
+      return `<div class="row wrap"><span class="chip accent">Seduta gratuita · caso clinico del corso</span><span class="grow"></span>
+          <button class="toggle on" data-x="free"><span class="sw"></span>Gratuita</button></div>
+        ${dc === true ? '<div class="small muted">Consenso all\'uso anonimo per la didattica: <b>presente</b>.</div>'
+          : `<div class="alert warn">${ic('warn')}<div>${dc === false ? 'Il paziente <b>non ha acconsentito</b> all\'uso anonimo dei dati per la didattica.' : 'Manca il consenso firmato all\'uso anonimo dei dati per la didattica.'} Raccoglilo dalla scheda Consenso prima di presentare il caso al corso.</div></div>`}`;
+    }
+    return `<div class="payrow">
+        <label class="field"><span class="row" style="gap:8px">Importo €${last != null ? `<button type="button" class="lastfee" data-x="lastfee" title="Prezzo dell'ultima seduta: tocca per usarlo">${String(last).replace('.', ',')}</button>` : ''}</span><input class="input" data-f="fee" inputmode="decimal" value="${s.fee ?? ''}" placeholder="0"></label>
+        <label class="field"><span>Metodo</span><div class="seg" data-method>${Object.entries(METHODS).map(([k, l]) => `<button data-m="${k}" class="${s.method === k ? 'on' : ''}">${l.split(' ')[0]}</button>`).join('')}</div></label>
+        <button class="toggle${s.paid ? ' on' : ''}" data-x="paid"><span class="sw"></span>Pagata</button>
+      </div>
+      <div class="row wrap" style="margin-top:10px">
+        <button class="toggle${s.invoiced ? ' on' : ''}" data-x="invoiced"><span class="sw"></span>Fattura emessa</button>
+        <span class="grow"></span>
+        <button class="toggle" data-x="free"><span class="sw"></span>Gratuita · caso clinico</button>
+      </div>`;
+  }
+  const paintPay = () => { $('[data-payblock]', el).innerHTML = payBlockHTML(); };
   function histHTML() {
     const prev = sessionsOfCycle(s.cycleId).filter((x) => x.id !== s.id);
     const trend = sessionsOfCycle(s.cycleId).filter((x) => x.vas != null).slice().reverse();
@@ -777,6 +804,13 @@ function openSession(sid, isNew = false) {
       s.fee = last; $('[data-f="fee"]', el).value = String(last).replace('.', ','); saver.flush();
     }
     else if (b.dataset.x === 'paid') { s.paid = !s.paid; b.classList.toggle('on', s.paid); saver.flush(); }
+    else if (b.dataset.x === 'invoiced') { s.invoiced = !s.invoiced; b.classList.toggle('on', s.invoiced); saver.flush(); }
+    else if (b.dataset.x === 'free') {
+      s.free = !s.free;
+      if (s.free) { s.fee = null; s.paid = false; s.invoiced = false; }
+      else s.fee = last ?? parseAmount(S.settings.defaultFee);
+      saver.flush(); paintPay();
+    }
     else if (b.dataset.x === 'close') close();
     else if (b.dataset.x === 'move-cycle') {
       const to = await chooseCycle(p, { title: 'Sposta la seduta', currentId: s.cycleId });
@@ -815,6 +849,7 @@ function openSession(sid, isNew = false) {
   document.addEventListener('keydown', onKey);
   $('#overlay-root').appendChild(el);
   current = { el, close };
+  paintPay();
   showPane();
   if (isNew) setTimeout(() => $('[data-f="text"]', el).focus(), 80);
 }
@@ -1090,11 +1125,14 @@ function renderPayments(main) {
   const now = todayISO().slice(0, 7);
   const m = S.ui.payMonth || now;
   const [Y, M] = m.split('-').map(Number);
-  const inMonth = S.sessions.filter((s) => s.date.startsWith(m) && s.fee > 0).sort((a, b) => b.date.localeCompare(a.date));
+  const inMonth = S.sessions.filter((s) => s.date.startsWith(m) && billable(s)).sort((a, b) => b.date.localeCompare(a.date));
+  const freeMonth = S.sessions.filter((s) => s.date.startsWith(m) && s.free).length;
+  const toInvoice = inMonth.filter((s) => !s.invoiced);
+  const invGroups = {}; uninvoicedOf().forEach((s) => (invGroups[s.patientId] = invGroups[s.patientId] || []).push(s));
   const paid = inMonth.filter((s) => s.paid), unpaid = inMonth.filter((s) => !s.paid);
-  const year = S.sessions.filter((s) => s.date.startsWith(String(Y)) && s.fee > 0 && s.paid);
+  const year = S.sessions.filter((s) => s.date.startsWith(String(Y)) && billable(s) && s.paid);
   const byMethod = {}; paid.forEach((s) => (byMethod[s.method] = (byMethod[s.method] || 0) + s.fee));
-  const allUnpaid = S.sessions.filter((s) => s.fee > 0 && !s.paid);
+  const allUnpaid = S.sessions.filter((s) => billable(s) && !s.paid);
   const groups = {}; allUnpaid.forEach((s) => (groups[s.patientId] = groups[s.patientId] || []).push(s));
   const pn = (id) => { const p = patient(id); return p ? fullName(p) : '—'; };
   main.innerHTML = `<section class="content"><div style="max-width:1000px;margin:0 auto">
@@ -1107,18 +1145,20 @@ function renderPayments(main) {
       <button class="btn sm" data-act="csv">${ic('share', 18)} CSV</button>
     </div>
     <div class="stats">
-      <div class="card stat"><div class="k">Incassato nel mese</div><div class="v">${eur(sum(paid))}</div><div class="s">${nSed(paid.length)} ${paid.length === 1 ? 'pagata' : 'pagate'}</div></div>
+      <div class="card stat"><div class="k">Incassato nel mese</div><div class="v">${eur(sum(paid))}</div><div class="s">${Object.keys(byMethod).length ? Object.entries(byMethod).map(([k, v]) => `${methodLabel(k)} ${eur(v)}`).join(' · ') : nSed(paid.length)}</div></div>
       <div class="card stat"><div class="k">Da incassare nel mese</div><div class="v" style="color:${unpaid.length ? 'var(--warn)' : 'inherit'}">${eur(sum(unpaid))}</div><div class="s">${nSed(unpaid.length)}</div></div>
-      <div class="card stat"><div class="k">Per metodo</div><div class="s" style="font-size:14px;color:var(--text);margin-top:6px">${Object.keys(byMethod).length ? Object.entries(byMethod).map(([k, v]) => `${methodLabel(k)}: <b>${eur(v)}</b>`).join('<br>') : '—'}</div></div>
+      <div class="card stat"><div class="k">Da fatturare nel mese</div><div class="v" style="color:${toInvoice.length ? 'var(--warn)' : 'inherit'}">${eur(sum(toInvoice))}</div><div class="s">${nSed(toInvoice.length)}</div></div>
       <div class="card stat"><div class="k">Incassato nel ${Y}</div><div class="v">${eur(sum(year))}</div><div class="s">${nSed(year.length)}</div></div>
     </div>
     <div class="card formcard" style="padding:8px 18px">
-      ${inMonth.length ? `<table class="t"><thead><tr><th>Data</th><th>Paziente</th><th>Metodo</th><th class="num">Importo</th><th class="num">Stato</th></tr></thead><tbody>
+      ${inMonth.length ? `<table class="t"><thead><tr><th>Data</th><th>Paziente</th><th>Metodo</th><th class="num">Importo</th><th class="num">Pagamento</th><th class="num">Fattura</th></tr></thead><tbody>
       ${inMonth.map((s) => `<tr><td>${fmtDate(s.date)}</td><td><button class="linkbtn" data-open-patient="${s.patientId}">${esc(pn(s.patientId))}</button></td>
         <td class="muted">${methodLabel(s.method)}</td><td class="num">${eur(s.fee)}</td>
-        <td class="num"><button class="chip ${s.paid ? 'ok' : 'warn'}" data-pay="${s.id}">${s.paid ? 'Pagata' : 'Da saldare'}</button></td></tr>`).join('')}
+        <td class="num"><button class="chip ${s.paid ? 'ok' : 'warn'}" data-pay="${s.id}">${s.paid ? 'Pagata' : 'Da saldare'}</button></td>
+        <td class="num"><button class="chip ${s.invoiced ? 'ok' : 'warn'}" data-inv="${s.id}">${s.invoiced ? 'Emessa' : 'Da emettere'}</button></td></tr>`).join('')}
       </tbody></table>` : '<div class="muted" style="padding:16px 0">Nessuna seduta con importo in questo mese.</div>'}
     </div>
+    ${freeMonth ? `<div class="small muted" style="margin:-6px 0 6px">Sedute gratuite (casi clinici del corso) nel mese: <b>${freeMonth}</b></div>` : ''}
     <h2 style="margin:22px 0 10px">Da saldare (tutti i mesi)</h2>
     ${Object.keys(groups).length ? `<div class="card" style="padding:8px 18px"><table class="t"><tbody>
       ${Object.entries(groups).sort((a, b) => pn(a[0]).localeCompare(pn(b[0]), 'it')).map(([pid, list]) => `<tr>
@@ -1126,15 +1166,23 @@ function renderPayments(main) {
         <td class="num"><b>${eur(sum(list))}</b></td>
         <td class="num"><button class="btn sm" data-payall="${pid}">${ic('check', 18)} Segna tutto pagato</button></td></tr>`).join('')}
     </tbody></table></div>` : '<div class="muted">Nessun pagamento in sospeso. 👍</div>'}
+    <h2 style="margin:22px 0 10px">Da fatturare (tutti i mesi)</h2>
+    ${Object.keys(invGroups).length ? `<div class="card" style="padding:8px 18px"><table class="t"><tbody>
+      ${Object.entries(invGroups).sort((a, b) => pn(a[0]).localeCompare(pn(b[0]), 'it')).map(([pid, list]) => `<tr>
+        <td><button class="linkbtn" data-open-patient="${pid}">${esc(pn(pid))}</button><div class="small faint">${list.map((s) => fmtDate(s.date)).join(', ')}</div></td>
+        <td class="num"><b>${eur(sum(list))}</b></td>
+        <td class="num"><button class="btn sm" data-invall="${pid}">${ic('check', 18)} Segna fatturate</button></td></tr>`).join('')}
+    </tbody></table></div>` : '<div class="muted">Nessuna fattura da emettere.</div>'}
   </div></section>`;
 }
+async function toggleInvoiced(sid) { const s = S.sessions.find((x) => x.id === sid); if (!s) return; s.invoiced = !s.invoiced; await save('sessions', s); render(); }
 async function togglePaid(sid) { const s = S.sessions.find((x) => x.id === sid); if (!s) return; s.paid = !s.paid; await save('sessions', s); render(); }
 function exportCSV() {
   const m = S.ui.payMonth || todayISO().slice(0, 7);
-  const rows = [['Data', 'Cognome', 'Nome', 'Codice fiscale', 'Importo', 'Metodo', 'Stato']];
-  S.sessions.filter((s) => s.date.startsWith(m) && s.fee > 0).sort((a, b) => a.date.localeCompare(b.date)).forEach((s) => {
+  const rows = [['Data', 'Cognome', 'Nome', 'Codice fiscale', 'Importo', 'Metodo', 'Pagamento', 'Fattura']];
+  S.sessions.filter((s) => s.date.startsWith(m) && billable(s)).sort((a, b) => a.date.localeCompare(b.date)).forEach((s) => {
     const p = patient(s.patientId) || {};
-    rows.push([fmtDate(s.date), p.cognome, p.nome, p.cf, String(s.fee).replace('.', ','), methodLabel(s.method), s.paid ? 'Pagata' : 'Da saldare']);
+    rows.push([fmtDate(s.date), p.cognome, p.nome, p.cf, String(s.fee).replace('.', ','), methodLabel(s.method), s.paid ? 'Pagata' : 'Da saldare', s.invoiced ? 'Emessa' : 'Da emettere']);
   });
   const csv = '﻿' + rows.map((r) => r.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
   shareFile(new Blob([csv], { type: 'text/csv' }), `Incassi ${m}.csv`, 'text/csv');
@@ -1351,6 +1399,15 @@ async function onClick(e) {
     render(); return;
   }
   if (d.pay) { togglePaid(d.pay); return; }
+  if (d.inv) { toggleInvoiced(d.inv); return; }
+  if (d.invall) {
+    const list = uninvoicedOf(d.invall);
+    if (await confirmDialog({ title: 'Segna come fatturate', html: `<p>${nSed(list.length)} di ${esc(fullName(patient(d.invall)))} per un totale di <b>${eur(sum(list))}</b>.</p>`, ok: 'Segna fatturate' })) {
+      for (const s of list) { s.invoiced = true; await save('sessions', s); }
+      render();
+    }
+    return;
+  }
   if (d.payall) {
     const list = unpaidOf(d.payall);
     if (await confirmDialog({ title: 'Segna come pagate', html: `<p>${nSed(list.length)} di ${esc(fullName(patient(d.payall)))} per un totale di <b>${eur(sum(list))}</b>.</p>`, ok: 'Segna pagate' })) {
