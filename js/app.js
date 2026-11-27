@@ -1,7 +1,7 @@
 /* OsteoStudio 3 – gestionale osteopatico offline per iPad.
    Tutti i dati restano nel database locale (IndexedDB) del dispositivo. */
 'use strict';
-const APP = { name: 'OsteoStudio', version: '3.4.0', db: 'osteostudio3', dbVersion: 1 };
+const APP = { name: 'OsteoStudio', version: '3.5.0', db: 'osteostudio3', dbVersion: 1 };
 const STORES = ['patients', 'cycles', 'sessions', 'consents'];
 
 /* =====================================================================
@@ -857,45 +857,6 @@ function openSession(sid, isNew = false) {
 /* =====================================================================
    Consenso informato con firma
    ===================================================================== */
-function signaturePad(host) {
-  host.innerHTML = '<canvas></canvas><button class="btn sm clear" type="button">Pulisci</button><span class="hint">Firma qui</span>';
-  const cv = host.querySelector('canvas'), ctx = cv.getContext('2d');
-  let drawing = false, has = false, last = null, penSeen = false;
-  function size() {
-    const r = host.getBoundingClientRect(); const d = 2;
-    cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d);
-    ctx.setTransform(d, 0, 0, d, 0, 0); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#10223a';
-    has = false;
-  }
-  const pos = (e) => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
-  cv.addEventListener('pointerdown', (e) => {
-    if (e.pointerType === 'pen') penSeen = true; else if (penSeen && e.pointerType === 'touch') return;
-    e.preventDefault(); cv.setPointerCapture(e.pointerId); drawing = true; last = pos(e);
-    ctx.beginPath(); ctx.arc(last[0], last[1], 1.2, 0, Math.PI * 2); ctx.fillStyle = '#10223a'; ctx.fill(); has = true;
-    host.querySelector('.hint').style.display = 'none';
-  });
-  cv.addEventListener('pointermove', (e) => {
-    if (!drawing) return;
-    for (const ev of (e.getCoalescedEvents ? e.getCoalescedEvents() : [e])) {
-      const p = pos(ev);
-      ctx.lineWidth = 1.4 + 2.2 * (ev.pointerType === 'pen' ? (ev.pressure || 0.5) : 0.5);
-      ctx.beginPath(); ctx.moveTo(last[0], last[1]); ctx.lineTo(p[0], p[1]); ctx.stroke();
-      last = p;
-    }
-  });
-  const end = () => { drawing = false; };
-  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
-  host.querySelector('.clear').addEventListener('click', () => { ctx.clearRect(0, 0, cv.width, cv.height); has = false; host.querySelector('.hint').style.display = ''; });
-  requestAnimationFrame(size);
-  return {
-    isEmpty: () => !has,
-    toJPEG() {
-      const out = document.createElement('canvas'); out.width = cv.width; out.height = cv.height;
-      const o = out.getContext('2d'); o.fillStyle = '#fff'; o.fillRect(0, 0, out.width, out.height); o.drawImage(cv, 0, 0);
-      return { url: out.toDataURL('image/jpeg', 0.9), w: out.width, h: out.height };
-    },
-  };
-}
 function consentVars(p, signer, role) {
   const st = S.settings;
   const pname = displayName(p);
@@ -965,9 +926,9 @@ async function openConsent(p) {
         <p style="margin-top:18px">Data: <b>${fmtDate(todayISO())}</b></p>
         <p class="small muted">La firma vale per il consenso informato al trattamento e per la presa visione dell'informativa privacy, con le scelte indicate sopra.</p>
         <div class="sigs">
-          <div><div class="small muted" style="margin-bottom:6px">Firma di <span data-signame>${esc(signer || 'chi firma')}</span></div><div class="sigpad" data-pad></div></div>
+          <div><div class="small muted" style="margin-bottom:6px">Firma di <span data-signame>${esc(signer || 'chi firma')}</span></div><div class="sigslot" data-slot="sig"></div></div>
           <div><div class="small muted" style="margin-bottom:6px">Firma del professionista</div>
-            ${st.proSignature ? `<div class="sigimg"><img src="${st.proSignature.url}" alt="Firma del professionista"></div>` : '<div class="sigpad" data-pro></div>'}</div>
+            <div class="sigslot" data-slot="pro"></div></div>
         </div>
       </div>
     </div>`;
@@ -980,8 +941,14 @@ async function openConsent(p) {
   };
   paint();
   $('#overlay-root').appendChild(el);
-  const pad = signaturePad($('[data-pad]', el));
-  const proPad = st.proSignature ? null : signaturePad($('[data-pro]', el));
+  const signs = { sig: null, pro: st.proSignature || null };
+  const paintSlot = (k) => {
+    const box = $(`[data-slot="${k}"]`, el), img = signs[k];
+    box.innerHTML = img
+      ? `<img src="${img.url}" alt="Firma"><button class="btn sm" data-sign="${k}">Rifai</button>`
+      : `<button class="sigtap" data-sign="${k}">${ic('pen')} Tocca per firmare</button>`;
+  };
+  paintSlot('sig'); paintSlot('pro');
   const close = () => { document.removeEventListener('keydown', onKey); el.remove(); current = null; if (!S.locked) render(); };
   const onKey = (e) => { if (e.key === 'Escape' && !document.querySelector('.modal-bg')) close(); };
   document.addEventListener('keydown', onKey);
@@ -996,6 +963,14 @@ async function openConsent(p) {
       inp.readOnly = role === 'paziente';
       if (role === 'paziente') { signer = displayName(p); inp.value = signer; } else if (signer === displayName(p)) { signer = ''; inp.value = ''; inp.focus(); }
       paint();
+    } else if (b.dataset.sign) {
+      const k = b.dataset.sign;
+      if (k === 'sig' && !signer) { toast('Prima indica il nome di chi firma'); $('[data-signer]', el).focus(); return; }
+      const img = await SignaturePad.open({
+        title: esc(k === 'sig' ? `Firma di ${signer}` : `Firma del professionista – ${st.studioNome}`),
+        subtitle: 'Consenso informato e informativa privacy',
+      });
+      if (img) { signs[k] = img; paintSlot(k); }
     } else if (b.dataset.opt !== undefined) {
       choices[+b.dataset.opt] = b.dataset.v === '1';
       $$(`[data-opt="${b.dataset.opt}"]`, el).forEach((x) => x.classList.toggle('on', x === b));
@@ -1004,10 +979,8 @@ async function openConsent(p) {
       if (!signer) { toast('Indica il nome di chi firma'); $('[data-signer]', el).focus(); return; }
       const miss = choices.indexOf(null);
       if (miss >= 0) { toast('Indica Acconsento o Non acconsento per ogni consenso facoltativo', 3000); $$('.optrow', el)[miss].scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
-      if (pad.isEmpty()) { toast('Manca la firma'); return; }
-      const sig = pad.toJPEG();
-      let pro = st.proSignature;
-      if (!pro && proPad && !proPad.isEmpty()) pro = proPad.toJPEG();
+      if (!signs.sig) { toast('Manca la firma del paziente'); $('[data-slot="sig"]', el).scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
+      const sig = signs.sig, pro = signs.pro;
       const c = {
         id: uid(), patientId: p.id, date: localDateTime(), createdAt: new Date().toISOString(),
         signer, role,
@@ -1285,20 +1258,10 @@ async function fillStorageInfo() {
     el.textContent = `${(e.usage / 1048576).toFixed(1)} MB${persisted ? ' · archivio persistente' : ''}`;
   } catch { el.textContent = 'n/d'; }
 }
-function proSignatureFlow() {
-  let pad;
-  return modal({
-    title: 'Firma del professionista', wide: true,
-    html: '<p class="muted" style="margin:0">Firma con Apple Pencil nel riquadro.</p><div class="sigpad" data-pad style="height:200px"></div>',
-    foot: '<button class="btn" data-cancel>Annulla</button><button class="btn primary" data-ok>Salva firma</button>',
-    onMount: ({ el, close }) => {
-      pad = signaturePad($('[data-pad]', el));
-      el.querySelector('[data-ok]').addEventListener('click', async () => {
-        if (pad.isEmpty()) { toast('Manca la firma'); return; }
-        S.settings.proSignature = pad.toJPEG(); await saveSettings(); close(true); render(); toast('Firma salvata');
-      });
-    },
-  });
+async function proSignatureFlow() {
+  const img = await SignaturePad.open({ title: 'Firma del professionista', subtitle: 'Verrà applicata a ogni nuovo consenso' });
+  if (!img) return;
+  S.settings.proSignature = img; await saveSettings(); render(); toast('Firma salvata');
 }
 
 /* ---------- Condivisione file (Salva in File / AirDrop / stampa) ---------- */
