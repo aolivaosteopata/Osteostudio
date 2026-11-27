@@ -295,3 +295,22 @@ table.t .num{text-align:right;font-variant-numeric:tabular-nums}
 .optrow .seg button{min-height:36px;font-size:13.5px}
 .optrow .seg button.on[data-v="1"]{background:var(--ok-soft);color:var(--ok)}
 .optrow .seg button.on[data-v="0"]{background:var(--danger-soft);color:var(--danger)}
+/* Firma a schermo intero */
+html.signing,html.signing *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important}
+.doc{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.doc input{-webkit-user-select:text;user-select:text}
+.sigslot{height:150px;border:1.5px dashed var(--border-strong);border-radius:12px;background:#fff;display:grid;place-items:center;position:relative;overflow:hidden}
+.sigslot img{max-width:92%;max-height:120px}
+.sigslot .btn{position:absolute;right:8px;top:8px}
+.sigtap{width:100%;height:100%;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:600;font-size:16px;color:#2c6e63}
+.sigfull{position:fixed;inset:0;z-index:300;background:var(--bg);display:flex;flex-direction:column;touch-action:none;overscroll-behavior:none}
+.sigfull-bar{display:flex;align-items:center;gap:10px;padding:calc(10px + var(--safe-t)) calc(16px + var(--safe-r)) 10px calc(16px + var(--safe-l));background:var(--surface-2);border-bottom:1px solid var(--border)}
+.sigfull-bar .ttl{flex:1;min-width:0}
+.sigfull-bar .ttl b{display:block;font-size:16.5px}
+.sigfull-bar .ttl span{font-size:13.5px;color:var(--muted)}
+.sigfull-stage{flex:1;min-height:0;display:grid;place-items:center;padding:20px calc(20px + var(--safe-r)) calc(20px + var(--safe-b)) calc(20px + var(--safe-l))}
+.sigfull-paper{position:relative;width:min(100%,1040px);height:min(100%,460px);background:#fff;border-radius:18px;box-shadow:var(--shadow-lg);touch-action:none}
+.sigfull-paper canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;z-index:2;cursor:crosshair}
+.sigfull-line{position:absolute;left:6%;right:6%;bottom:28%;border-bottom:2px solid #c9d3cf;z-index:1}
+.sigfull-line span{position:absolute;left:-4px;bottom:4px;color:#9aa8a3;font-size:22px}
+.sigfull-hint{position:absolute;left:0;right:0;bottom:calc(28% - 30px);text-align:center;color:#9aa8a3;font-size:14px;z-index:1;transition:opacity .2s;pointer-events:none}
