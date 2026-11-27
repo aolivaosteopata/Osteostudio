@@ -1,7 +1,7 @@
 /* OsteoStudio 3 – gestionale osteopatico offline per iPad.
    Tutti i dati restano nel database locale (IndexedDB) del dispositivo. */
 'use strict';
-const APP = { name: 'OsteoStudio', version: '3.1.0', db: 'osteostudio3', dbVersion: 1 };
+const APP = { name: 'OsteoStudio', version: '3.2.0', db: 'osteostudio3', dbVersion: 1 };
 const STORES = ['patients', 'cycles', 'sessions', 'consents'];
 
 /* =====================================================================
@@ -142,7 +142,9 @@ async function remove(store, id) { S[store] = S[store].filter((x) => x.id !== id
 const patient = (id) => S.patients.find((p) => p.id === id);
 const byDateDesc = (a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || '').localeCompare(a.createdAt || '');
 const sessionsOf = (pid) => S.sessions.filter((s) => s.patientId === pid).sort(byDateDesc);
-const cyclesOf = (pid) => S.cycles.filter((c) => c.patientId === pid).sort((a, b) => (b.start || '').localeCompare(a.start || '') || (b.createdAt || '').localeCompare(a.createdAt || ''));
+const cycleLast = (c) => S.sessions.reduce((m, s) => (s.cycleId === c.id && s.date > m ? s.date : m), c.start || '');
+// Cicli dal più recente (in base all'ultima seduta), così in cima c'è quello su cui si sta lavorando
+const cyclesOf = (pid) => S.cycles.filter((c) => c.patientId === pid).sort((a, b) => cycleLast(b).localeCompare(cycleLast(a)) || (b.createdAt || '').localeCompare(a.createdAt || ''));
 const sessionsOfCycle = (cid) => S.sessions.filter((s) => s.cycleId === cid).sort(byDateDesc);
 const consentsOf = (pid) => S.consents.filter((c) => c.patientId === pid).sort((a, b) => b.date.localeCompare(a.date));
 const unpaidOf = (pid) => S.sessions.filter((s) => s.patientId === pid && s.fee > 0 && !s.paid);
@@ -504,15 +506,15 @@ function tabSessions(tab, p) {
   tab.innerHTML = vasChart(sessionsOf(p.id)) + cycles.map((c) => {
     const ss = sessionsOfCycle(c.id);
     const trend = ss.filter((s) => s.vas != null).slice().reverse().map((s) => s.vas);
-    return `<div class="card cycle${c.closed ? ' closed' : ''}">
+    return `<div class="card cycle">
       <div class="cycle-head">
         <div class="grow">
-          <div class="lbl">Ciclo dal ${fmtDate(c.start)} · ${ss.length} ${ss.length === 1 ? 'seduta' : 'sedute'} · ${c.closed ? 'concluso' : 'in corso'}${trend.length > 1 ? ` · VAS ${trend.join(' → ')}` : ''}</div>
+          <div class="lbl">Ciclo dal ${fmtDate(c.start)} · ${nSed(ss.length)}${ss.length ? ` · ultima ${fmtDate(ss[0].date)}` : ''}${trend.length > 1 ? ` · VAS ${trend.join(' → ')}` : ''}</div>
           <div class="mot">${esc(c.motivo || 'Motivo non indicato')}</div>
           ${c.sintomi ? `<div class="sym pre">${esc(c.sintomi)}</div>` : ''}
         </div>
         <button class="btn sm" data-act="edit-cycle" data-id="${c.id}">Modifica</button>
-        <button class="btn sm" data-act="toggle-cycle" data-id="${c.id}">${c.closed ? 'Riapri' : 'Concludi'}</button>
+        <button class="btn sm danger" data-act="delete-cycle" data-id="${c.id}">${ic('trash', 16)} Elimina</button>
       </div>
       ${ss.map((s) => `<button class="sess" data-sid="${s.id}">
         <span class="when"><b>${fmtDate(s.date)}</b><span>${fmtDow(s.date)} · n° ${sessionNumber(s)}</span></span>
@@ -614,16 +616,39 @@ async function cycleDialog(c) {
 async function newCycle(pid) {
   const v = await cycleDialog(null);
   if (!v) return null;
-  // Un solo ciclo aperto per volta: gli altri vengono conclusi.
-  for (const c of S.cycles.filter((c) => c.patientId === pid && !c.closed)) { c.closed = true; await save('cycles', c); }
-  const c = { id: uid(), patientId: pid, createdAt: new Date().toISOString(), motivo: v.motivo, sintomi: v.sintomi, start: v.start || todayISO(), closed: false };
+  const c = { id: uid(), patientId: pid, createdAt: new Date().toISOString(), motivo: v.motivo, sintomi: v.sintomi, start: v.start || todayISO() };
   await save('cycles', c);
   return c;
 }
+/* Chiede a quale ciclo appartiene la seduta: il più recente è già selezionato (Invio),
+   oppure si apre un nuovo ciclo. Se il paziente non ha cicli si passa subito al nuovo ciclo. */
+async function chooseCycle(p, { title = 'Nuova seduta', currentId = null } = {}) {
+  const cycles = cyclesOf(p.id);
+  if (!cycles.length) return newCycle(p.id);
+  const pick = await modal({
+    title,
+    html: `<p class="muted" style="margin:0">A quale ciclo di trattamento appartiene la seduta?</p>
+      <div class="choices">
+        ${cycles.map((c, i) => {
+          const n = sessionsOfCycle(c.id).length;
+          return `<button class="choice${c.id === currentId ? ' cur' : ''}" data-c="${c.id}" ${(currentId ? c.id === currentId : i === 0) ? 'autofocus' : ''}>
+            <span class="grow"><b>${esc(c.motivo || 'Motivo non indicato')}</b>
+            <span class="small muted" style="display:block">dal ${fmtDate(c.start)} · ${nSed(n)}${n ? ` · ultima ${fmtDate(cycleLast(c))}` : ''}</span></span>
+            ${c.id === currentId ? '<span class="chip">attuale</span>' : i === 0 ? '<span class="chip accent">più recente</span>' : ''}</button>`;
+        }).join('')}
+        <button class="choice new" data-c="new">${ic('plus', 18)}<span class="grow"><b>Nuovo ciclo</b><span class="small muted" style="display:block">Nuovo motivo di consulenza</span></span></button>
+      </div>`,
+    foot: '<button class="btn" data-cancel>Annulla</button>',
+    onMount: ({ el, close }) => el.querySelector('.choices').addEventListener('click', (e) => { const b = e.target.closest('[data-c]'); if (b) close(b.dataset.c); }),
+  });
+  if (!pick) return null;
+  if (pick === 'new') return newCycle(p.id);
+  return S.cycles.find((c) => c.id === pick) || null;
+}
 async function newSessionFlow() {
   const p = patient(S.ui.patientId); if (!p) return;
-  let c = cyclesOf(p.id).find((x) => !x.closed);
-  if (!c) { c = await newCycle(p.id); if (!c) return; }
+  const c = await chooseCycle(p);
+  if (!c) return;
   const s = {
     id: uid(), patientId: p.id, cycleId: c.id, createdAt: new Date().toISOString(),
     date: todayISO(), vas: null, text: '', strokes: [],
@@ -657,7 +682,7 @@ function openSession(sid, isNew = false) {
       <button class="btn" data-x="close">${ic('back')} Fatto</button>
       <div class="ttl"><b>${esc(displayName(p))} · seduta n° ${sessionNumber(s)}</b><span>${esc(c?.motivo || '')}</span></div>
       <span class="small faint">Salvataggio automatico · <kbd>⌘↩</kbd> chiudi</span>
-      <button class="btn danger icon" data-x="delete" aria-label="Elimina seduta">${ic('trash')}</button>
+      <button class="btn danger" data-x="delete">${ic('trash')} Elimina seduta</button>
     </div>
     <div class="full-body">
       <div class="ed-left">
@@ -684,7 +709,7 @@ function openSession(sid, isNew = false) {
     const trend = sessionsOfCycle(s.cycleId).filter((x) => x.vas != null).slice().reverse();
     const others = cyclesOf(p.id).filter((x) => x.id !== s.cycleId);
     return `<div class="hist">
-      <div class="box"><div class="h"><span class="lbl grow">Motivo della consulenza</span><button class="btn sm ghost" data-x="edit-cycle">Modifica</button></div>
+      <div class="box"><div class="h"><span class="lbl grow">Motivo della consulenza</span><button class="btn sm ghost" data-x="move-cycle">Cambia ciclo</button><button class="btn sm ghost" data-x="edit-cycle">Modifica</button></div>
         <div style="font-weight:650;font-size:16.5px">${esc(c?.motivo || '—')}</div>
         ${c?.sintomi ? `<div class="lbl" style="margin-top:10px">Sintomi</div><div class="pre">${esc(c.sintomi)}</div>` : ''}
         ${trend.length > 1 ? `<div class="lbl" style="margin-top:10px">VAS nel ciclo</div><div class="trend">${trend.map((x) => vasBadge(x.vas)).join('<span class="faint">→</span>')}</div>` : ''}
@@ -739,6 +764,13 @@ function openSession(sid, isNew = false) {
     }
     else if (b.dataset.x === 'paid') { s.paid = !s.paid; b.classList.toggle('on', s.paid); saver.flush(); }
     else if (b.dataset.x === 'close') close();
+    else if (b.dataset.x === 'move-cycle') {
+      const to = await chooseCycle(p, { title: 'Sposta la seduta', currentId: s.cycleId });
+      if (!to || to.id === s.cycleId) return;
+      s.cycleId = to.id; saver.flush();
+      close(true); openSession(s.id);
+      toast(`Seduta spostata in: ${to.motivo}`);
+    }
     else if (b.dataset.x === 'edit-cycle' && c) {
       const v = await cycleDialog(c); if (!v) return;
       Object.assign(c, v); await save('cycles', c);
@@ -977,7 +1009,7 @@ function patientPDF(p) {
   section('Consenso informato');
   doc.text(cons.length ? cons.map((c) => `Firmato il ${fmtDate(c.date)} da ${c.signer}${c.role !== 'paziente' ? ` (${c.role})` : ''}`).join('\n') : 'Nessun consenso firmato registrato.', { after: 4 });
   cyclesOf(p.id).slice().reverse().forEach((c) => {
-    section(`Ciclo dal ${fmtDate(c.start)}${c.closed ? ' (concluso)' : ' (in corso)'}`);
+    section(`Ciclo dal ${fmtDate(c.start)}`);
     kv('Motivo della consulenza', c.motivo);
     kv('Sintomi', c.sintomi);
     sessionsOfCycle(c.id).slice().reverse().forEach((s, i) => {
@@ -1280,10 +1312,15 @@ async function onClick(e) {
     case 'new-session': newSessionFlow(); break;
     case 'new-cycle': if (p && await newCycle(p.id)) renderDetail(); break;
     case 'edit-cycle': { const c = S.cycles.find((x) => x.id === d.id); const v = c && await cycleDialog(c); if (v) { Object.assign(c, v); await save('cycles', c); renderDetail(); } break; }
-    case 'toggle-cycle': {
+    case 'delete-cycle': {
       const c = S.cycles.find((x) => x.id === d.id); if (!c) break;
-      if (c.closed) for (const o of S.cycles.filter((o) => o.patientId === c.patientId && !o.closed)) { o.closed = true; await save('cycles', o); }
-      c.closed = !c.closed; await save('cycles', c); renderDetail(); break;
+      const ss = sessionsOfCycle(c.id);
+      if (await confirmDialog({ title: 'Elimina ciclo', html: `<p>Eliminare il ciclo <b>${esc(c.motivo || '')}</b> del ${fmtDate(c.start)}${ss.length ? ` insieme a ${ss.length === 1 ? '<b>1 seduta</b>' : `<b>${ss.length} sedute</b>`} (note, VAS, mappe e pagamenti)` : ''}? L'operazione non si può annullare.</p>`, ok: 'Elimina', danger: true })) {
+        for (const s of ss) await remove('sessions', s.id);
+        await remove('cycles', c.id);
+        renderDetail(); refreshList(); toast('Ciclo eliminato');
+      }
+      break;
     }
     case 'delete-patient': {
       if (!p) break;

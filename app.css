@@ -148,7 +148,6 @@ select.input{-webkit-appearance:none;appearance:none;padding-right:36px;backgrou
 .cycle-head .lbl{font-size:12px;font-weight:700;color:var(--faint);letter-spacing:.05em;text-transform:uppercase}
 .cycle-head .mot{font-size:17px;font-weight:650;margin-top:2px}
 .cycle-head .sym{color:var(--muted);font-size:14.5px;margin-top:3px}
-.cycle.closed .cycle-head{opacity:.75}
 .sess{display:flex;gap:14px;align-items:center;width:100%;text-align:left;padding:12px 18px;border-top:1px solid var(--border);min-height:64px}
 .sess:active{background:var(--surface-2)}
 .sess .when{width:92px;flex:none}
@@ -283,3 +282,9 @@ table.t .num{text-align:right;font-variant-numeric:tabular-nums}
 .map-tools .sizes button{width:40px;padding:0;display:grid;place-items:center}
 .map-tools .sizes i{display:block;border-radius:50%;background:currentColor}
 .btn.sm.icon{width:38px}
+.choices{display:flex;flex-direction:column;gap:8px}
+.choice{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 14px;min-height:60px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface)}
+.choice:focus-visible,.choice:active{border-color:var(--accent);background:var(--accent-soft);outline:none}
+.choice.cur{border-color:var(--accent)}
+.choice.new{border-style:dashed;color:var(--accent)}
+.choice.new b{color:var(--accent)}
