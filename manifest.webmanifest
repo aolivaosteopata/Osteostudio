@@ -1,7 +1,7 @@
 {
   "name": "OsteoStudio",
   "short_name": "OsteoStudio",
-  "description": "Gestionale per studio osteopatico, offline",
+  "description": "Gestionale snello per lo studio osteopatico, offline su iPad",
   "lang": "it",
   "start_url": "./",
   "scope": "./",
