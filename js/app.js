@@ -1,7 +1,7 @@
 /* OsteoStudio 3 – gestionale osteopatico offline per iPad.
    Tutti i dati restano nel database locale (IndexedDB) del dispositivo. */
 'use strict';
-const APP = { name: 'OsteoStudio', version: '3.5.0', db: 'osteostudio3', dbVersion: 1 };
+const APP = { name: 'OsteoStudio', version: '3.6.0', db: 'osteostudio3', dbVersion: 1 };
 const STORES = ['patients', 'cycles', 'sessions', 'consents'];
 
 /* =====================================================================
@@ -1164,25 +1164,34 @@ function exportCSV() {
 /* =====================================================================
    Impostazioni e backup
    ===================================================================== */
+/* Dati dello studio: in sola lettura finché non si preme "Modifica", poi Salva/Annulla espliciti. */
+const STUDIO_FIELDS = [
+  ['studioNome', 'Nome e cognome', '', ''], ['studioTitolo', 'Titolo', '', ''], ['studioPiva', 'P.IVA', '', 'inputmode="numeric"'],
+  ['studioAlbo', "Iscrizione all'albo", 'span2', 'placeholder="Es. Albo dei Fisioterapisti di Milano n. 1234"'], ['studioTelefono', 'Telefono', '', 'type="tel"'],
+  ['studioIndirizzo', 'Indirizzo dello studio', 'span2', 'placeholder="Via, CAP, città"'], ['studioEmail', 'Email', '', 'type="email" autocapitalize="off"'],
+];
+function studioCardBody(st) {
+  const sigImg = st.proSignature ? `<img src="${st.proSignature.url}" alt="Firma" style="height:50px;background:#fff;border-radius:8px;border:1px solid var(--border)">` : '<span class="faint small">non impostata</span>';
+  if (!S.ui.editStudio) {
+    return `<div class="grid3">${STUDIO_FIELDS.map(([k, l, cls]) => `<div class="field ${cls}"><span>${l}</span><div class="roval${st[k] ? '' : ' novalue'}">${esc(st[k] || '—')}</div></div>`).join('')}</div>
+      <div class="row" style="margin-top:16px"><div class="grow"><b>Firma del professionista</b><div class="small muted">Aggiunta a ogni consenso.</div></div>${sigImg}</div>
+      <div class="row" style="margin-top:16px;justify-content:flex-end"><button class="btn" data-act="studio-edit">${ic('pen', 18)} Modifica dati</button></div>`;
+  }
+  return `<div class="alert warn" style="margin-bottom:14px">${ic('pen')}<div>Stai modificando i dati dello studio. Premi <b>Salva</b> per confermare oppure <b>Annulla</b>.</div></div>
+    <div class="grid3">${STUDIO_FIELDS.map(([k, l, cls, attrs]) => `<label class="field ${cls}"><span>${l}</span><input class="input" data-studio="${k}" value="${esc(st[k])}" ${attrs}></label>`).join('')}</div>
+    <div class="row" style="margin-top:16px"><div class="grow"><b>Firma del professionista</b><div class="small muted">Aggiunta a ogni consenso.</div></div>
+      ${sigImg}
+      <button class="btn sm" data-act="pro-sign">${st.proSignature ? 'Rifai' : 'Disegna firma'}</button>
+      ${st.proSignature ? '<button class="btn sm danger" data-act="pro-sign-del">Togli</button>' : ''}</div>
+    <div class="row" style="margin-top:16px;justify-content:flex-end"><button class="btn" data-act="studio-cancel">Annulla</button><button class="btn primary" data-act="studio-save">${ic('check', 18)} Salva</button></div>`;
+}
 function renderSettings(main) {
   const st = S.settings;
   main.innerHTML = `<section class="content"><div class="settings">
     <h1 style="margin-bottom:18px">Impostazioni</h1>
 
     <div class="card"><h2>Studio</h2><p class="muted">Nome, titolo e P.IVA compaiono nell'intestazione dei PDF; albo, indirizzo, telefono ed email nel testo del consenso e dell'informativa.</p>
-      <div class="grid3">
-        <label class="field"><span>Nome e cognome</span><input class="input" data-set="studioNome" value="${esc(st.studioNome)}"></label>
-        <label class="field"><span>Titolo</span><input class="input" data-set="studioTitolo" value="${esc(st.studioTitolo)}"></label>
-        <label class="field"><span>P.IVA</span><input class="input" data-set="studioPiva" value="${esc(st.studioPiva)}" inputmode="numeric"></label>
-        <label class="field span2"><span>Iscrizione all'albo</span><input class="input" data-set="studioAlbo" value="${esc(st.studioAlbo)}" placeholder="Es. Albo dei Fisioterapisti di Milano n. 1234"></label>
-        <label class="field"><span>Telefono</span><input class="input" data-set="studioTelefono" value="${esc(st.studioTelefono)}" type="tel"></label>
-        <label class="field span2"><span>Indirizzo dello studio</span><input class="input" data-set="studioIndirizzo" value="${esc(st.studioIndirizzo)}" placeholder="Via, CAP, città"></label>
-        <label class="field"><span>Email</span><input class="input" data-set="studioEmail" value="${esc(st.studioEmail)}" type="email" autocapitalize="off"></label>
-      </div>
-      <div class="row" style="margin-top:16px"><div class="grow"><b>Firma del professionista</b><div class="small muted">Disegnala una volta: verrà aggiunta a ogni consenso.</div></div>
-        ${st.proSignature ? `<img src="${st.proSignature.url}" alt="" style="height:50px;background:#fff;border-radius:8px;border:1px solid var(--border)">` : ''}
-        <button class="btn sm" data-act="pro-sign">${st.proSignature ? 'Rifai' : 'Disegna firma'}</button>
-        ${st.proSignature ? '<button class="btn sm danger" data-act="pro-sign-del">Rimuovi</button>' : ''}</div>
+      ${studioCardBody(st)}
     </div>
 
     <div class="card"><h2>Sedute</h2><p class="muted">Valori proposti a ogni nuova seduta.</p>
@@ -1195,10 +1204,11 @@ function renderSettings(main) {
     <div class="card"><h2>Consenso e privacy</h2>
       <p class="muted">Testi adattati dai tuoi moduli: <b>falli verificare</b> da un consulente o dalla tua associazione. Righe che iniziano con <code># </code> = titolo, <code>## </code> = sottotitolo, <code>- </code> = elenco. Segnaposto: <code>{{dichiarante}}</code> <code>{{paziente}}</code> <code>{{professionista}}</code> <code>{{titolo}}</code> <code>{{albo}}</code> <code>{{piva}}</code> <code>{{indirizzo_studio}}</code> <code>{{telefono_studio}}</code> <code>{{email_studio}}</code> <code>{{data}}</code>. Consensi facoltativi: uno per riga. I documenti già firmati non cambiano.</p>
       <div class="seg" style="margin-bottom:10px">${Object.entries(DOC_LABELS).map(([k, l]) => `<button data-doctab="${k}" class="${S.ui.docTab === k ? 'on' : ''}">${l}</button>`).join('')}</div>
-      <textarea class="textarea consent-editor" id="docText" data-doc="${S.ui.docTab}" spellcheck="true">${esc(docText(S.ui.docTab))}</textarea>
+      <textarea class="textarea consent-editor${S.ui.editDoc ? '' : ' ro'}" id="docText" data-doc="${S.ui.docTab}" spellcheck="true" ${S.ui.editDoc ? '' : 'readonly'}>${esc(docText(S.ui.docTab))}</textarea>
       <div class="row" style="margin-top:10px"><span class="small faint grow" id="consentSaved">${st[S.ui.docTab] ? 'Testo personalizzato' : 'Testo predefinito'}</span>
         <button class="btn sm" data-act="consent-preview">Anteprima PDF</button>
-        <button class="btn sm" data-act="consent-reset">Ripristina predefinito</button></div>
+        ${S.ui.editDoc ? `<button class="btn sm" data-act="consent-reset">Ripristina predefinito</button><button class="btn sm primary" data-act="doc-done">${ic('check', 16)} Fatto</button>`
+          : `<button class="btn sm" data-act="doc-edit">${ic('pen', 16)} Modifica testo</button>`}</div>
     </div>
 
     <div class="card"><h2>Sicurezza</h2><p class="muted">Il PIN impedisce l'accesso all'app; la vera protezione dei dati è il codice/Face ID dell'iPad, che deve essere sempre attivo.</p>
@@ -1351,7 +1361,7 @@ async function restoreFlow(file) {
 async function onClick(e) {
   const t = e.target.closest('button,[data-pid],[data-sid]'); if (!t || S.locked) return;
   const d = t.dataset;
-  if (d.nav) { flushPending(); S.ui.view = d.nav; render(); return; }
+  if (d.nav) { flushPending(); S.ui.view = d.nav; S.ui.editStudio = false; S.ui.editDoc = false; render(); return; }
   if (d.pid) { flushPending(); S.ui.patientId = d.pid; if (!['sedute', 'anagrafica', 'anamnesi', 'consenso'].includes(S.ui.tab)) S.ui.tab = 'sedute'; $$('.pitem').forEach((x) => x.classList.toggle('on', x.dataset.pid === d.pid)); renderDetail(); $('#detail').scrollTop = 0; return; }
   if (d.sid) { openSession(d.sid); return; }
   if (d.tab) { flushPending(); S.ui.tab = d.tab; renderDetail(); return; }
@@ -1382,7 +1392,7 @@ async function onClick(e) {
   if (d.openPatient) { S.ui = { ...S.ui, view: 'patients', patientId: d.openPatient, tab: 'sedute' }; render(); return; }
   if (d.dm) { S.settings.defaultMethod = d.dm; await saveSettings(); $$('[data-dm]').forEach((x) => x.classList.toggle('on', x === t)); return; }
   if (d.al) { S.settings.autoLockMin = +d.al; await saveSettings(); $$('[data-al]').forEach((x) => x.classList.toggle('on', x === t)); return; }
-  if (d.doctab) { flushPending(); S.ui.docTab = d.doctab; render(); return; }
+  if (d.doctab) { flushPending(); S.ui.docTab = d.doctab; S.ui.editDoc = false; render(); return; }
   if (d.bd) { S.settings.backupDays = +d.bd; await saveSettings(); render(); return; }
   const p = patient(S.ui.patientId);
   switch (d.act) {
@@ -1432,8 +1442,20 @@ async function onClick(e) {
       showLock('change');
       break;
     }
+    case 'studio-edit': S.ui.editStudio = true; render(); $('[data-studio="studioNome"]')?.focus(); break;
+    case 'studio-cancel': S.ui.editStudio = false; render(); break;
+    case 'studio-save': {
+      $$('[data-studio]').forEach((i) => (S.settings[i.dataset.studio] = i.value.trim()));
+      await saveSettings();
+      S.ui.editStudio = false; render(); toast('Dati dello studio salvati');
+      break;
+    }
+    case 'doc-edit': S.ui.editDoc = true; render(); $('#docText')?.focus(); break;
+    case 'doc-done': flushPending(); S.ui.editDoc = false; render(); toast('Testo salvato'); break;
     case 'pro-sign': proSignatureFlow(); break;
-    case 'pro-sign-del': S.settings.proSignature = null; await saveSettings(); render(); break;
+    case 'pro-sign-del':
+      if (await confirmDialog({ title: 'Togli la firma', html: '<p>Togliere la tua firma? Non verrà più aggiunta ai nuovi consensi.</p>', ok: 'Togli firma', danger: true })) { S.settings.proSignature = null; await saveSettings(); render(); }
+      break;
     case 'consent-reset':
       if (await confirmDialog({ title: 'Ripristina testo', html: `<p>Il testo «${DOC_LABELS[S.ui.docTab]}» tornerà quello predefinito. I documenti già firmati non cambiano.</p>`, ok: 'Ripristina' })) { S.settings[S.ui.docTab] = null; await saveSettings(); render(); }
       break;
