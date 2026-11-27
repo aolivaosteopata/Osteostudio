@@ -288,3 +288,10 @@ table.t .num{text-align:right;font-variant-numeric:tabular-nums}
 .choice.cur{border-color:var(--accent)}
 .choice.new{border-style:dashed;color:var(--accent)}
 .choice.new b{color:var(--accent)}
+.doc h4{font-size:15px;margin:16px 0 6px;color:var(--accent)}
+.docsep{border:0;border-top:1px solid var(--border);margin:26px 0 6px}
+.opts{display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
+.optrow{display:flex;align-items:center;gap:14px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;font-size:15px}
+.optrow .seg button{min-height:36px;font-size:13.5px}
+.optrow .seg button.on[data-v="1"]{background:var(--ok-soft);color:var(--ok)}
+.optrow .seg button.on[data-v="0"]{background:var(--danger-soft);color:var(--danger)}
