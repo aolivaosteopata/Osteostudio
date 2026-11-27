@@ -1,7 +1,7 @@
 /* OsteoStudio 3 – gestionale osteopatico offline per iPad.
    Tutti i dati restano nel database locale (IndexedDB) del dispositivo. */
 'use strict';
-const APP = { name: 'OsteoStudio', version: '3.0.0', db: 'osteostudio3', dbVersion: 1 };
+const APP = { name: 'OsteoStudio', version: '3.1.0', db: 'osteostudio3', dbVersion: 1 };
 const STORES = ['patients', 'cycles', 'sessions', 'consents'];
 
 /* =====================================================================
@@ -35,7 +35,8 @@ function vasColor(v) {
   const hue = 130 - (v / 10) * 125;
   return `hsl(${hue} 58% 42%)`;
 }
-const METHODS = { contanti: 'Contanti', pos: 'POS / carta', bonifico: 'Bonifico', altro: 'Altro' };
+const METHODS = { pos: 'POS / carta', bonifico: 'Bonifico', altro: 'Altro' };
+const methodLabel = (k) => METHODS[k] || (k === 'contanti' ? 'Contanti' : '—'); // 'contanti' solo per sedute già registrate
 function debounce(fn, ms) {
   let t = null;
   const d = () => { clearTimeout(t); pending.add(d); t = setTimeout(() => { t = null; pending.delete(d); fn(); }, ms); };
@@ -118,7 +119,7 @@ const DB = {
    ===================================================================== */
 const DEFAULT_SETTINGS = {
   studioNome: '', studioTitolo: 'Osteopata', studioPiva: '',
-  defaultFee: '', defaultMethod: 'contanti',
+  defaultFee: '', defaultMethod: 'pos',
   consentText: null, proSignature: null,
   autoLockMin: 5, backupDays: 7, lastBackup: null,
 };
@@ -626,7 +627,7 @@ async function newSessionFlow() {
   const s = {
     id: uid(), patientId: p.id, cycleId: c.id, createdAt: new Date().toISOString(),
     date: todayISO(), vas: null, text: '', strokes: [],
-    fee: parseAmount(S.settings.defaultFee), method: S.settings.defaultMethod || 'contanti', paid: false,
+    fee: parseAmount(S.settings.defaultFee), method: METHODS[S.settings.defaultMethod] ? S.settings.defaultMethod : 'pos', paid: false,
   };
   await save('sessions', s);
   S.ui.tab = 'sedute';
@@ -645,6 +646,10 @@ function openSession(sid, isNew = false) {
   const el = document.createElement('div');
   el.className = 'full';
   let pane = 'hist', mapEd = null;
+  // Prezzo applicato a questo paziente nella seduta precedente (promemoria, i prezzi variano da paziente a paziente)
+  const prevPaid = S.sessions.filter((x) => x.patientId === s.patientId && x.id !== s.id && x.fee > 0)
+    .sort(byDateDesc).filter((x, _, a) => x.date <= s.date || a.every((y) => y.date > s.date));
+  const last = prevPaid.length ? prevPaid[0].fee : null;
   const saver = debounce(() => save('sessions', s), 350);
 
   el.innerHTML = `
@@ -663,7 +668,7 @@ function openSession(sid, isNew = false) {
         <label class="field grow" style="display:flex"><span>Note della seduta</span>
           <textarea class="textarea notes" data-f="text" placeholder="Valutazione, test, trattamento eseguito, risposta del paziente, indicazioni…">${esc(s.text)}</textarea></label>
         <div class="payrow">
-          <label class="field"><span>Importo €</span><input class="input" data-f="fee" inputmode="decimal" value="${s.fee ?? ''}" placeholder="0"></label>
+          <label class="field"><span class="row" style="gap:8px">Importo €${last != null ? `<button type="button" class="lastfee" data-x="lastfee" title="Prezzo dell'ultima seduta: tocca per usarlo">${String(last).replace('.', ',')}</button>` : ''}</span><input class="input" data-f="fee" inputmode="decimal" value="${s.fee ?? ''}" placeholder="0"></label>
           <label class="field"><span>Metodo</span><div class="seg" data-method>${Object.entries(METHODS).map(([k, l]) => `<button data-m="${k}" class="${s.method === k ? 'on' : ''}">${l.split(' ')[0]}</button>`).join('')}</div></label>
           <button class="toggle${s.paid ? ' on' : ''}" data-x="paid"><span class="sw"></span>Pagata</button>
         </div>
@@ -728,6 +733,10 @@ function openSession(sid, isNew = false) {
     } else if (b.dataset.m) {
       s.method = b.dataset.m; $$('[data-m]', el).forEach((x) => x.classList.toggle('on', x === b)); saver.flush();
     } else if (b.dataset.pane) { pane = b.dataset.pane; showPane(); }
+    else if (b.dataset.x === 'lastfee') {
+      e.preventDefault();
+      s.fee = last; $('[data-f="fee"]', el).value = String(last).replace('.', ','); saver.flush();
+    }
     else if (b.dataset.x === 'paid') { s.paid = !s.paid; b.classList.toggle('on', s.paid); saver.flush(); }
     else if (b.dataset.x === 'close') close();
     else if (b.dataset.x === 'edit-cycle' && c) {
@@ -1015,13 +1024,13 @@ function renderPayments(main) {
     <div class="stats">
       <div class="card stat"><div class="k">Incassato nel mese</div><div class="v">${eur(sum(paid))}</div><div class="s">${nSed(paid.length)} ${paid.length === 1 ? 'pagata' : 'pagate'}</div></div>
       <div class="card stat"><div class="k">Da incassare nel mese</div><div class="v" style="color:${unpaid.length ? 'var(--warn)' : 'inherit'}">${eur(sum(unpaid))}</div><div class="s">${nSed(unpaid.length)}</div></div>
-      <div class="card stat"><div class="k">Per metodo</div><div class="s" style="font-size:14px;color:var(--text);margin-top:6px">${Object.keys(byMethod).length ? Object.entries(byMethod).map(([k, v]) => `${METHODS[k] || k}: <b>${eur(v)}</b>`).join('<br>') : '—'}</div></div>
+      <div class="card stat"><div class="k">Per metodo</div><div class="s" style="font-size:14px;color:var(--text);margin-top:6px">${Object.keys(byMethod).length ? Object.entries(byMethod).map(([k, v]) => `${methodLabel(k)}: <b>${eur(v)}</b>`).join('<br>') : '—'}</div></div>
       <div class="card stat"><div class="k">Incassato nel ${Y}</div><div class="v">${eur(sum(year))}</div><div class="s">${nSed(year.length)}</div></div>
     </div>
     <div class="card formcard" style="padding:8px 18px">
       ${inMonth.length ? `<table class="t"><thead><tr><th>Data</th><th>Paziente</th><th>Metodo</th><th class="num">Importo</th><th class="num">Stato</th></tr></thead><tbody>
       ${inMonth.map((s) => `<tr><td>${fmtDate(s.date)}</td><td><button class="linkbtn" data-open-patient="${s.patientId}">${esc(pn(s.patientId))}</button></td>
-        <td class="muted">${METHODS[s.method] || '—'}</td><td class="num">${eur(s.fee)}</td>
+        <td class="muted">${methodLabel(s.method)}</td><td class="num">${eur(s.fee)}</td>
         <td class="num"><button class="chip ${s.paid ? 'ok' : 'warn'}" data-pay="${s.id}">${s.paid ? 'Pagata' : 'Da saldare'}</button></td></tr>`).join('')}
       </tbody></table>` : '<div class="muted" style="padding:16px 0">Nessuna seduta con importo in questo mese.</div>'}
     </div>
@@ -1040,7 +1049,7 @@ function exportCSV() {
   const rows = [['Data', 'Cognome', 'Nome', 'Codice fiscale', 'Importo', 'Metodo', 'Stato']];
   S.sessions.filter((s) => s.date.startsWith(m) && s.fee > 0).sort((a, b) => a.date.localeCompare(b.date)).forEach((s) => {
     const p = patient(s.patientId) || {};
-    rows.push([fmtDate(s.date), p.cognome, p.nome, p.cf, String(s.fee).replace('.', ','), METHODS[s.method] || '', s.paid ? 'Pagata' : 'Da saldare']);
+    rows.push([fmtDate(s.date), p.cognome, p.nome, p.cf, String(s.fee).replace('.', ','), methodLabel(s.method), s.paid ? 'Pagata' : 'Da saldare']);
   });
   const csv = '﻿' + rows.map((r) => r.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
   shareFile(new Blob([csv], { type: 'text/csv' }), `Incassi ${m}.csv`, 'text/csv');
@@ -1358,6 +1367,7 @@ async function loadAll() {
     DB.all('patients'), DB.all('cycles'), DB.all('sessions'), DB.all('consents'), DB.getKV('settings'), DB.getKV('pin')]);
   Object.assign(S, { patients, cycles, sessions, consents, pin: pin || null });
   S.settings = { ...DEFAULT_SETTINGS, ...(settings || {}) };
+  if (!METHODS[S.settings.defaultMethod]) S.settings.defaultMethod = 'pos';
 }
 
 async function init() {
