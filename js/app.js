@@ -1,7 +1,7 @@
 /* OsteoStudio 3 – gestionale osteopatico offline per iPad.
    Tutti i dati restano nel database locale (IndexedDB) del dispositivo. */
 'use strict';
-const APP = { name: 'OsteoStudio', version: '3.2.0', db: 'osteostudio3', dbVersion: 1 };
+const APP = { name: 'OsteoStudio', version: '3.3.0', db: 'osteostudio3', dbVersion: 1 };
 const STORES = ['patients', 'cycles', 'sessions', 'consents'];
 
 /* =====================================================================
@@ -120,16 +120,20 @@ const DB = {
 const DEFAULT_SETTINGS = {
   studioNome: '', studioTitolo: 'Osteopata', studioPiva: '',
   defaultFee: '', defaultMethod: 'pos',
-  consentText: null, proSignature: null,
+  studioAlbo: '', studioIndirizzo: '', studioTelefono: '', studioEmail: '',
+  consentText: null, privacyText: null, optionsText: null, proSignature: null,
   autoLockMin: 5, backupDays: 7, lastBackup: null,
 };
 const S = {
   settings: { ...DEFAULT_SETTINGS }, pin: null,
   patients: [], cycles: [], sessions: [], consents: [],
-  ui: { view: 'patients', patientId: null, tab: 'sedute', q: '', sort: 'az', payMonth: null },
+  ui: { view: 'patients', patientId: null, tab: 'sedute', q: '', sort: 'az', payMonth: null, docTab: 'consentText' },
   locked: true,
 };
-const consentText = () => S.settings.consentText || DEFAULT_CONSENT;
+const DOC_DEFAULTS = { consentText: DEFAULT_CONSENT, privacyText: DEFAULT_PRIVACY, optionsText: DEFAULT_OPTIONS };
+const DOC_LABELS = { consentText: 'Consenso informato', privacyText: 'Informativa privacy', optionsText: 'Consensi facoltativi' };
+const docText = (k) => S.settings[k] || DOC_DEFAULTS[k];
+const consentText = () => docText('consentText');
 async function saveSettings() { await DB.setKV('settings', S.settings); }
 async function save(store, obj) {
   obj.updatedAt = new Date().toISOString();
@@ -579,10 +583,20 @@ function tabConsent(tab, p) {
   tab.innerHTML = `
     <div class="row" style="margin-bottom:14px"><p class="muted grow" style="margin:0">Il paziente legge il consenso e firma con Apple Pencil: l'app genera il PDF e lo conserva qui.</p>
     <button class="btn primary" data-act="consent">${ic('pen')} Raccogli consenso</button></div>
-    ${list.length ? `<div class="card" style="padding:6px 18px"><table class="t"><thead><tr><th>Data</th><th>Firmato da</th><th></th></tr></thead><tbody>
+    ${list.length ? `<div class="card" style="padding:6px 18px"><table class="t"><thead><tr><th>Data</th><th>Firmato da</th><th>Consensi facoltativi</th><th></th></tr></thead><tbody>
       ${list.map((c) => `<tr><td>${fmtDate(c.date)} <span class="faint small">${c.date.slice(11, 16)}</span></td><td>${esc(c.signer)}${c.role && c.role !== 'paziente' ? ` <span class="faint small">(${esc(c.role)})</span>` : ''}</td>
+      <td>${(c.opts || []).map((o) => `<span class="chip ${o.ok ? 'ok' : 'danger'}" title="${esc(o.label)}">${esc(shortOpt(o.label))}: ${o.ok ? 'sì' : 'no'}</span>`).join(' ') || '<span class="faint">—</span>'}</td>
       <td class="num"><button class="btn sm" data-act="consent-pdf" data-id="${c.id}">${ic('share', 18)} PDF</button> <button class="btn sm danger" data-act="consent-del" data-id="${c.id}" aria-label="Elimina">${ic('trash', 18)}</button></td></tr>`).join('')}
     </tbody></table></div>` : '<div class="alert warn">' + ic('warn') + '<div>Nessun consenso firmato per questo paziente.</div></div>'}`;
+}
+
+/* Etichetta breve di un consenso facoltativo, per le schede. */
+function shortOpt(label) {
+  const l = label.toLowerCase();
+  if (l.includes('promemoria')) return 'Promemoria';
+  if (l.includes('familiari') || l.includes('medico')) return 'Comunicazione a terzi';
+  if (l.includes('anonim') || l.includes('ricerca') || l.includes('didattica')) return 'Uso anonimo/didattica';
+  return label.split(' ').slice(0, 3).join(' ');
 }
 
 /* ---------- Azioni paziente ---------- */
@@ -854,6 +868,8 @@ function consentVars(p, signer, role) {
     paziente: pname,
     dichiarante: role === 'paziente' || !role ? signer || pname : `${signer}, in qualità di ${role} di ${pname},`,
     professionista: st.studioNome, titolo: st.studioTitolo, data: fmtDate(todayISO()),
+    albo: st.studioAlbo, piva: st.studioPiva, indirizzo_studio: st.studioIndirizzo,
+    telefono_studio: st.studioTelefono, email_studio: st.studioEmail,
   };
 }
 function consentBodyHTML(text) {
@@ -861,7 +877,7 @@ function consentBodyHTML(text) {
   Consent.blocks(text).forEach((b) => {
     if (b.type === 'li' && !inList) { html += '<ul>'; inList = true; }
     if (b.type !== 'li' && inList) { html += '</ul>'; inList = false; }
-    html += b.type === 'h' ? `<h3>${esc(b.text)}</h3>` : b.type === 'li' ? `<li>${esc(b.text)}</li>` : `<p>${esc(b.text)}</p>`;
+    html += b.type === 'h' ? `<h3>${esc(b.text)}</h3>` : b.type === 'h2' ? `<h4>${esc(b.text)}</h4>` : b.type === 'li' ? `<li>${esc(b.text)}</li>` : `<p>${esc(b.text)}</p>`;
   });
   return html + (inList ? '</ul>' : '');
 }
@@ -869,6 +885,8 @@ function patientLine(p) {
   const bits = [`<b>${esc(displayName(p))}</b>`];
   if (p.dataNascita) bits.push(`nato/a${p.luogoNascita ? ' a ' + esc(p.luogoNascita) : ''} il ${fmtDate(p.dataNascita)}`);
   if (p.cf) bits.push(`C.F. ${esc(p.cf)}`);
+  if (p.telefono) bits.push(`tel. ${esc(p.telefono)}`);
+  if (p.medico) bits.push(`medico curante ${esc(p.medico)}`);
   return bits.join(' · ');
 }
 async function openConsent(p) {
@@ -878,7 +896,12 @@ async function openConsent(p) {
     }
     return;
   }
+  const missing = [['studioAlbo', 'iscrizione all\'albo'], ['studioIndirizzo', 'indirizzo dello studio'], ['studioTelefono', 'telefono'], ['studioEmail', 'email']]
+    .filter(([k]) => !S.settings[k]).map(([, l]) => l);
+  if (missing.length && !(await confirmDialog({ title: 'Dati dello studio incompleti', html: `<p>Nel testo resteranno degli spazi vuoti perché mancano: <b>${missing.join(', ')}</b>. Puoi completarli in Impostazioni → Studio.</p>`, ok: 'Continua comunque' }))) return;
   const minor = (ageOf(p.dataNascita) ?? 99) < 18;
+  const optLabels = Consent.options(docText('optionsText'));
+  const choices = optLabels.map(() => null);
   const el = document.createElement('div');
   el.className = 'full';
   let role = minor ? 'genitore' : 'paziente';
@@ -887,7 +910,7 @@ async function openConsent(p) {
   el.innerHTML = `
     <div class="full-bar">
       <button class="btn" data-x="close">${ic('back')} Annulla</button>
-      <div class="ttl"><b>Consenso informato · ${esc(displayName(p))}</b><span>Fai leggere il testo al paziente, poi fallo firmare in fondo</span></div>
+      <div class="ttl"><b>Consenso e privacy · ${esc(displayName(p))}</b><span>Fai leggere i testi al paziente, scegliere i consensi facoltativi e firmare in fondo</span></div>
       <button class="btn primary" data-x="sign">${ic('check')} Firma e salva</button>
     </div>
     <div class="consent-body">
@@ -900,7 +923,12 @@ async function openConsent(p) {
           <label class="field"><span>Nome e cognome di chi firma</span><input class="input" data-signer value="${esc(signer)}" ${role === 'paziente' ? 'readonly' : ''}></label>
         </div>
         <div data-text></div>
+        <hr class="docsep">
+        <div data-privacy></div>
+        ${optLabels.length ? `<h4>Consensi facoltativi</h4><div class="opts">${optLabels.map((l, i) => `<div class="optrow"><span class="grow">${esc(l)}</span>
+          <div class="seg"><button data-opt="${i}" data-v="1">Acconsento</button><button data-opt="${i}" data-v="0">Non acconsento</button></div></div>`).join('')}</div>` : ''}
         <p style="margin-top:18px">Data: <b>${fmtDate(todayISO())}</b></p>
+        <p class="small muted">La firma vale per il consenso informato al trattamento e per la presa visione dell'informativa privacy, con le scelte indicate sopra.</p>
         <div class="sigs">
           <div><div class="small muted" style="margin-bottom:6px">Firma di <span data-signame>${esc(signer || 'chi firma')}</span></div><div class="sigpad" data-pad></div></div>
           <div><div class="small muted" style="margin-bottom:6px">Firma del professionista</div>
@@ -909,7 +937,12 @@ async function openConsent(p) {
       </div>
     </div>`;
   const textBox = $('[data-text]', el);
-  const paint = () => { textBox.innerHTML = consentBodyHTML(Consent.fill(consentText(), consentVars(p, signer, role))); $('[data-signame]', el).textContent = signer || 'chi firma'; };
+  const paint = () => {
+    const vars = consentVars(p, signer, role);
+    textBox.innerHTML = consentBodyHTML(Consent.fill(consentText(), vars));
+    $('[data-privacy]', el).innerHTML = consentBodyHTML(Consent.fill(docText('privacyText'), vars));
+    $('[data-signame]', el).textContent = signer || 'chi firma';
+  };
   paint();
   $('#overlay-root').appendChild(el);
   const pad = signaturePad($('[data-pad]', el));
@@ -928,9 +961,14 @@ async function openConsent(p) {
       inp.readOnly = role === 'paziente';
       if (role === 'paziente') { signer = displayName(p); inp.value = signer; } else if (signer === displayName(p)) { signer = ''; inp.value = ''; inp.focus(); }
       paint();
+    } else if (b.dataset.opt !== undefined) {
+      choices[+b.dataset.opt] = b.dataset.v === '1';
+      $$(`[data-opt="${b.dataset.opt}"]`, el).forEach((x) => x.classList.toggle('on', x === b));
     } else if (b.dataset.x === 'close') close();
     else if (b.dataset.x === 'sign') {
       if (!signer) { toast('Indica il nome di chi firma'); $('[data-signer]', el).focus(); return; }
+      const miss = choices.indexOf(null);
+      if (miss >= 0) { toast('Indica Acconsento o Non acconsento per ogni consenso facoltativo', 3000); $$('.optrow', el)[miss].scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
       if (pad.isEmpty()) { toast('Manca la firma'); return; }
       const sig = pad.toJPEG();
       let pro = st.proSignature;
@@ -941,6 +979,8 @@ async function openConsent(p) {
         header: { nome: st.studioNome, titolo: st.studioTitolo, piva: st.studioPiva },
         patientText: patientLine(p).replace(/<[^>]+>/g, ''),
         text: Consent.fill(consentText(), consentVars(p, signer, role)),
+        privacy: Consent.fill(docText('privacyText'), consentVars(p, signer, role)),
+        opts: optLabels.map((label, i) => ({ label, ok: choices[i] })),
         sig, pro: pro || null,
       };
       await save('consents', c);
@@ -961,17 +1001,30 @@ function pdfHeader(doc, h) {
 function pdfBlocks(doc, text) {
   Consent.blocks(text).forEach((b) => {
     if (b.type === 'h') { doc.space(8); doc.text(b.text, { size: 12.5, bold: true, after: 4 }); }
+    else if (b.type === 'h2') { doc.space(5); doc.text(b.text, { size: 10.5, bold: true, color: [0.17, 0.43, 0.39], after: 2 }); }
     else if (b.type === 'li') doc.text(b.text, { indent: 14, bullet: true, after: 3 });
     else doc.text(b.text, { after: 5 });
   });
 }
 function consentPDF(c) {
-  const doc = new PDF.Doc({ footer: `Consenso informato firmato il ${fmtDate(c.date)} alle ${c.date.slice(11, 16)}` });
+  const doc = new PDF.Doc({ footer: `${c.privacy ? 'Consenso informato e informativa privacy' : 'Consenso informato'} firmati il ${fmtDate(c.date)} alle ${c.date.slice(11, 16)}` });
   pdfHeader(doc, c.header);
   doc.text(`Paziente: ${c.patientText}`, { size: 10.5, bold: true, after: 8 });
   pdfBlocks(doc, c.text);
+  if (c.privacy) {
+    doc.newPage();
+    pdfHeader(doc, c.header);
+    doc.text(`Interessato: ${c.patientText}`, { size: 10.5, bold: true, after: 8 });
+    pdfBlocks(doc, c.privacy);
+  }
+  if (c.opts?.length) {
+    doc.space(8);
+    doc.text('Consensi facoltativi', { size: 11, bold: true, after: 3 });
+    c.opts.forEach((o) => doc.text(`${o.ok ? 'ACCONSENTO' : 'NON ACCONSENTO'} – ${o.label}`, { indent: 14, bullet: true, after: 3 }));
+  }
   doc.space(10);
-  doc.text(`Data: ${fmtDate(c.date)}`, { after: 6 });
+  doc.text(`Data: ${fmtDate(c.date)}`, { after: 2 });
+  if (c.privacy) doc.text('La firma vale per il consenso informato al trattamento e per la presa visione dell\'informativa privacy, con le scelte sopra indicate.', { size: 9, color: [0.35, 0.4, 0.38], after: 6 });
   const boxW = (doc.w - 24) / 2, boxH = 92;
   doc.ensure(boxH + 40);
   const top = doc.y;
@@ -1007,7 +1060,7 @@ function patientPDF(p) {
   if (ANAMNESI.some(([k]) => p.anamnesi?.[k]?.trim())) { section('Anamnesi'); ANAMNESI.forEach(([k, l]) => kv(l, p.anamnesi?.[k])); }
   const cons = consentsOf(p.id);
   section('Consenso informato');
-  doc.text(cons.length ? cons.map((c) => `Firmato il ${fmtDate(c.date)} da ${c.signer}${c.role !== 'paziente' ? ` (${c.role})` : ''}`).join('\n') : 'Nessun consenso firmato registrato.', { after: 4 });
+  doc.text(cons.length ? cons.map((c) => `Firmato il ${fmtDate(c.date)} da ${c.signer}${c.role !== 'paziente' ? ` (${c.role})` : ''}${c.opts?.length ? ` – facoltativi: ${c.opts.map((o) => `${shortOpt(o.label)} ${o.ok ? 'sì' : 'no'}`).join(', ')}` : ''}`).join('\n') : 'Nessun consenso firmato registrato.', { after: 4 });
   cyclesOf(p.id).slice().reverse().forEach((c) => {
     section(`Ciclo dal ${fmtDate(c.start)}`);
     kv('Motivo della consulenza', c.motivo);
@@ -1095,11 +1148,15 @@ function renderSettings(main) {
   main.innerHTML = `<section class="content"><div class="settings">
     <h1 style="margin-bottom:18px">Impostazioni</h1>
 
-    <div class="card"><h2>Studio</h2><p class="muted">Compaiono nell'intestazione del consenso e della cartella PDF.</p>
+    <div class="card"><h2>Studio</h2><p class="muted">Nome, titolo e P.IVA compaiono nell'intestazione dei PDF; albo, indirizzo, telefono ed email nel testo del consenso e dell'informativa.</p>
       <div class="grid3">
         <label class="field"><span>Nome e cognome</span><input class="input" data-set="studioNome" value="${esc(st.studioNome)}"></label>
         <label class="field"><span>Titolo</span><input class="input" data-set="studioTitolo" value="${esc(st.studioTitolo)}"></label>
         <label class="field"><span>P.IVA</span><input class="input" data-set="studioPiva" value="${esc(st.studioPiva)}" inputmode="numeric"></label>
+        <label class="field span2"><span>Iscrizione all'albo</span><input class="input" data-set="studioAlbo" value="${esc(st.studioAlbo)}" placeholder="Es. Albo dei Fisioterapisti di Milano n. 1234"></label>
+        <label class="field"><span>Telefono</span><input class="input" data-set="studioTelefono" value="${esc(st.studioTelefono)}" type="tel"></label>
+        <label class="field span2"><span>Indirizzo dello studio</span><input class="input" data-set="studioIndirizzo" value="${esc(st.studioIndirizzo)}" placeholder="Via, CAP, città"></label>
+        <label class="field"><span>Email</span><input class="input" data-set="studioEmail" value="${esc(st.studioEmail)}" type="email" autocapitalize="off"></label>
       </div>
       <div class="row" style="margin-top:16px"><div class="grow"><b>Firma del professionista</b><div class="small muted">Disegnala una volta: verrà aggiunta a ogni consenso.</div></div>
         ${st.proSignature ? `<img src="${st.proSignature.url}" alt="" style="height:50px;background:#fff;border-radius:8px;border:1px solid var(--border)">` : ''}
@@ -1114,10 +1171,11 @@ function renderSettings(main) {
       </div>
     </div>
 
-    <div class="card"><h2>Testo del consenso informato</h2>
-      <p class="muted">Bozza impostata su L. 219/2017, L. 3/2018 e artt. 9 e 13 GDPR: <b>falla verificare</b> da un consulente o dalla tua associazione. Righe che iniziano con <code># </code> = titolo, con <code>- </code> = elenco. Segnaposto: <code>{{dichiarante}}</code> <code>{{paziente}}</code> <code>{{professionista}}</code> <code>{{titolo}}</code> <code>{{data}}</code>. I consensi già firmati non cambiano.</p>
-      <textarea class="textarea consent-editor" id="consentText" spellcheck="true">${esc(consentText())}</textarea>
-      <div class="row" style="margin-top:10px"><span class="small faint grow" id="consentSaved">${st.consentText ? 'Testo personalizzato' : 'Testo predefinito'}</span>
+    <div class="card"><h2>Consenso e privacy</h2>
+      <p class="muted">Testi adattati dai tuoi moduli: <b>falli verificare</b> da un consulente o dalla tua associazione. Righe che iniziano con <code># </code> = titolo, <code>## </code> = sottotitolo, <code>- </code> = elenco. Segnaposto: <code>{{dichiarante}}</code> <code>{{paziente}}</code> <code>{{professionista}}</code> <code>{{titolo}}</code> <code>{{albo}}</code> <code>{{piva}}</code> <code>{{indirizzo_studio}}</code> <code>{{telefono_studio}}</code> <code>{{email_studio}}</code> <code>{{data}}</code>. Consensi facoltativi: uno per riga. I documenti già firmati non cambiano.</p>
+      <div class="seg" style="margin-bottom:10px">${Object.entries(DOC_LABELS).map(([k, l]) => `<button data-doctab="${k}" class="${S.ui.docTab === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <textarea class="textarea consent-editor" id="docText" data-doc="${S.ui.docTab}" spellcheck="true">${esc(docText(S.ui.docTab))}</textarea>
+      <div class="row" style="margin-top:10px"><span class="small faint grow" id="consentSaved">${st[S.ui.docTab] ? 'Testo personalizzato' : 'Testo predefinito'}</span>
         <button class="btn sm" data-act="consent-preview">Anteprima PDF</button>
         <button class="btn sm" data-act="consent-reset">Ripristina predefinito</button></div>
     </div>
@@ -1162,10 +1220,10 @@ function renderSettings(main) {
   main.addEventListener('input', (e) => {
     const k = e.target.dataset.set;
     if (k) { st[k] = e.target.value.trim(); saver(); }
-    if (e.target.id === 'consentText') {
-      const v = e.target.value;
-      st.consentText = v.trim() && v.trim() !== DEFAULT_CONSENT.trim() ? v : null;
-      $('#consentSaved').textContent = st.consentText ? 'Testo personalizzato · salvato' : 'Testo predefinito';
+    if (e.target.id === 'docText') {
+      const k = e.target.dataset.doc, v = e.target.value;
+      st[k] = v.trim() && v.trim() !== DOC_DEFAULTS[k].trim() ? v : null;
+      $('#consentSaved').textContent = st[k] ? 'Testo personalizzato · salvato' : 'Testo predefinito';
       saver();
     }
   });
@@ -1304,6 +1362,7 @@ async function onClick(e) {
   if (d.openPatient) { S.ui = { ...S.ui, view: 'patients', patientId: d.openPatient, tab: 'sedute' }; render(); return; }
   if (d.dm) { S.settings.defaultMethod = d.dm; await saveSettings(); $$('[data-dm]').forEach((x) => x.classList.toggle('on', x === t)); return; }
   if (d.al) { S.settings.autoLockMin = +d.al; await saveSettings(); $$('[data-al]').forEach((x) => x.classList.toggle('on', x === t)); return; }
+  if (d.doctab) { flushPending(); S.ui.docTab = d.doctab; render(); return; }
   if (d.bd) { S.settings.backupDays = +d.bd; await saveSettings(); render(); return; }
   const p = patient(S.ui.patientId);
   switch (d.act) {
@@ -1356,14 +1415,16 @@ async function onClick(e) {
     case 'pro-sign': proSignatureFlow(); break;
     case 'pro-sign-del': S.settings.proSignature = null; await saveSettings(); render(); break;
     case 'consent-reset':
-      if (await confirmDialog({ title: 'Ripristina testo', html: '<p>Il testo del consenso tornerà quello predefinito. I consensi già firmati non cambiano.</p>', ok: 'Ripristina' })) { S.settings.consentText = null; await saveSettings(); render(); }
+      if (await confirmDialog({ title: 'Ripristina testo', html: `<p>Il testo «${DOC_LABELS[S.ui.docTab]}» tornerà quello predefinito. I documenti già firmati non cambiano.</p>`, ok: 'Ripristina' })) { S.settings[S.ui.docTab] = null; await saveSettings(); render(); }
       break;
     case 'consent-preview': {
       flushPending();
       const st = S.settings;
       const demo = { nome: 'Mario', cognome: 'Rossi', dataNascita: '1980-05-12', luogoNascita: 'Milano', cf: 'RSSMRA80E12F205X' };
       const c = { date: localDateTime(), signer: 'Mario Rossi', role: 'paziente', header: { nome: st.studioNome || 'Nome dello studio', titolo: st.studioTitolo, piva: st.studioPiva },
-        patientText: patientLine(demo).replace(/<[^>]+>/g, '') + ' (esempio)', text: Consent.fill(consentText(), consentVars(demo, 'Mario Rossi', 'paziente')), sig: null, pro: st.proSignature };
+        patientText: patientLine(demo).replace(/<[^>]+>/g, '') + ' (esempio)', text: Consent.fill(consentText(), consentVars(demo, 'Mario Rossi', 'paziente')),
+        privacy: Consent.fill(docText('privacyText'), consentVars(demo, 'Mario Rossi', 'paziente')),
+        opts: Consent.options(docText('optionsText')).map((label, i) => ({ label, ok: i !== 1 })), sig: null, pro: st.proSignature };
       shareFile(consentPDF(c), 'Anteprima consenso.pdf', 'application/pdf');
       break;
     }
