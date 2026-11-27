@@ -1,8 +1,8 @@
 /* OsteoStudio 3 – service worker per l'uso offline.
    Memorizza solo i file dell'app: i dati dei pazienti restano nel database locale dell'iPad. */
-const CACHE = 'osteostudio-v3.6.0';
-const ASSETS = ['./', './index.html', './app.css', './js/pdf.js', './js/body.js', './js/consent.js', './js/signature.js', './js/app.js',
-  './manifest.webmanifest', './icon-180.png', './icon-512.png'];
+const CACHE = 'osteostudio-v3.7.0';
+const ASSETS = ['./', './index.html', './app.css', './js/pdf.js', './js/brand.js', './js/body.js', './js/consent.js', './js/signature.js', './js/app.js',
+  './manifest.webmanifest', './icon-180.png', './logo-mark.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));

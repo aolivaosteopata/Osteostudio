@@ -317,3 +317,6 @@ html.signing,html.signing *{-webkit-user-select:none!important;user-select:none!
 .roval{min-height:44px;padding:11px 12px;border-radius:var(--r-sm);background:var(--surface-2);font-weight:600;overflow-wrap:anywhere}
 .roval.novalue{color:var(--faint);font-weight:400}
 .consent-editor.ro{background:var(--surface-2);color:var(--muted)}
+.brand .mark{width:32px;height:32px;border-radius:9px;background:#fff;padding:2px;box-shadow:0 0 0 1px var(--border)}
+.lock-box .brand{flex-direction:column;gap:12px}
+.lock-box .brand .mark{width:76px;height:76px;border-radius:20px;padding:6px}

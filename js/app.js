@@ -1,7 +1,7 @@
 /* OsteoStudio 3 – gestionale osteopatico offline per iPad.
    Tutti i dati restano nel database locale (IndexedDB) del dispositivo. */
 'use strict';
-const APP = { name: 'OsteoStudio', version: '3.6.0', db: 'osteostudio3', dbVersion: 1 };
+const APP = { name: 'OsteoStudio', version: '3.7.0', db: 'osteostudio3', dbVersion: 1 };
 const STORES = ['patients', 'cycles', 'sessions', 'consents'];
 
 /* =====================================================================
@@ -120,7 +120,7 @@ const DB = {
 const DEFAULT_SETTINGS = {
   studioNome: '', studioTitolo: 'Osteopata', studioPiva: '',
   defaultFee: '', defaultMethod: 'pos',
-  studioAlbo: '', studioIndirizzo: '', studioTelefono: '', studioEmail: '',
+  studioAlbo: '', studioIndirizzo: '', studioTelefono: '', studioEmail: '', useLogo: true,
   consentText: null, privacyText: null, optionsText: null, proSignature: null,
   autoLockMin: 5, backupDays: 7, lastBackup: null,
 };
@@ -221,7 +221,7 @@ function showLock(mode, opts = {}) {
     const [t, sub] = step === 1 ? ['Conferma il PIN', 'Inseriscilo di nuovo.'] : titles[mode];
     root.innerHTML = `
       <div class="lock-box">
-        <div class="brand"><i>O</i>OsteoStudio</div>
+        <div class="brand"><img class="mark" src="logo-mark.png" alt="">OsteoStudio</div>
         <h2>${t}</h2><div class="muted small">${sub}</div>
         <div class="pins${err ? ' err' : ''}">${Array.from({ length: LEN }, (_, i) => `<i class="${i < entry.length ? 'f' : ''}"></i>`).join('')}</div>
         <div class="lock-msg">${esc(msg)}</div>
@@ -355,7 +355,7 @@ function render() {
   $('#app').innerHTML = `
     <div class="shell">
       <header class="topbar">
-        <div class="brand"><i>O</i>OsteoStudio</div>
+        <div class="brand"><img class="mark" src="logo-mark.png" alt="">OsteoStudio</div>
         <nav class="seg" aria-label="Sezioni">
           <button data-nav="patients" class="${u.view === 'patients' ? 'on' : ''}">Pazienti</button>
           <button data-nav="payments" class="${u.view === 'payments' ? 'on' : ''}">Pagamenti</button>
@@ -1001,6 +1001,20 @@ async function openConsent(p) {
 function localDateTime() { const d = new Date(); return `${todayISO()}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; }
 
 function pdfHeader(doc, h) {
+  // Intestazione con il logo dello studio (disattivabile in Impostazioni → Studio)
+  if (S.settings.useLogo !== false && typeof BRAND_LOGO !== 'undefined') {
+    const lh = 36, lw = lh * BRAND_LOGO.w / BRAND_LOGO.h;
+    if (doc._logo == null) doc._logo = doc.addJPEG(BRAND_LOGO.url, BRAND_LOGO.w, BRAND_LOGO.h);
+    doc.ensure(lh + 20);
+    doc.imageAt(doc._logo, doc.m.l, doc.y, lw, lh);
+    if (h.piva) {
+      const t = PDF.encode(`P.IVA ${h.piva}`);
+      doc.raw(doc.m.l + doc.w - PDF.width(t, 9.5, false), doc.y - lh + 3, t, 9.5, false, [0.35, 0.4, 0.38]);
+    }
+    doc.y -= lh;
+    doc.rule([0.4, 0.67, 0.59], 1, 10, 14);
+    return;
+  }
   doc.text(h.nome || '', { size: 15, bold: true, lead: 1.2 });
   const sub = [h.titolo, h.piva ? `P.IVA ${h.piva}` : ''].filter(Boolean).join(' · ');
   if (sub) doc.text(sub, { size: 10, color: [0.35, 0.4, 0.38] });
@@ -1170,11 +1184,17 @@ const STUDIO_FIELDS = [
   ['studioAlbo', "Iscrizione all'albo", 'span2', 'placeholder="Es. Albo dei Fisioterapisti di Milano n. 1234"'], ['studioTelefono', 'Telefono', '', 'type="tel"'],
   ['studioIndirizzo', 'Indirizzo dello studio', 'span2', 'placeholder="Via, CAP, città"'], ['studioEmail', 'Email', '', 'type="email" autocapitalize="off"'],
 ];
+function logoPreview(st) {
+  return st.useLogo !== false && typeof BRAND_LOGO !== 'undefined'
+    ? `<img src="${BRAND_LOGO.url}" alt="Logo" style="height:34px;border-radius:6px;border:1px solid var(--border);background:#fff;padding:4px 8px">`
+    : '<span class="faint small">disattivato</span>';
+}
 function studioCardBody(st) {
   const sigImg = st.proSignature ? `<img src="${st.proSignature.url}" alt="Firma" style="height:50px;background:#fff;border-radius:8px;border:1px solid var(--border)">` : '<span class="faint small">non impostata</span>';
   if (!S.ui.editStudio) {
     return `<div class="grid3">${STUDIO_FIELDS.map(([k, l, cls]) => `<div class="field ${cls}"><span>${l}</span><div class="roval${st[k] ? '' : ' novalue'}">${esc(st[k] || '—')}</div></div>`).join('')}</div>
       <div class="row" style="margin-top:16px"><div class="grow"><b>Firma del professionista</b><div class="small muted">Aggiunta a ogni consenso.</div></div>${sigImg}</div>
+      <div class="row" style="margin-top:16px"><div class="grow"><b>Logo nell'intestazione dei PDF</b><div class="small muted">Consenso, informativa e cartella del paziente.</div></div>${logoPreview(st)}</div>
       <div class="row" style="margin-top:16px;justify-content:flex-end"><button class="btn" data-act="studio-edit">${ic('pen', 18)} Modifica dati</button></div>`;
   }
   return `<div class="alert warn" style="margin-bottom:14px">${ic('pen')}<div>Stai modificando i dati dello studio. Premi <b>Salva</b> per confermare oppure <b>Annulla</b>.</div></div>
@@ -1183,6 +1203,8 @@ function studioCardBody(st) {
       ${sigImg}
       <button class="btn sm" data-act="pro-sign">${st.proSignature ? 'Rifai' : 'Disegna firma'}</button>
       ${st.proSignature ? '<button class="btn sm danger" data-act="pro-sign-del">Togli</button>' : ''}</div>
+    <div class="row" style="margin-top:16px"><div class="grow"><b>Logo nell'intestazione dei PDF</b><div class="small muted">Se disattivato, l'intestazione riporta nome, titolo e P.IVA in testo.</div></div>
+      <button class="toggle${st.useLogo !== false ? ' on' : ''}" data-act="logo-toggle"><span class="sw"></span>Usa il logo</button></div>
     <div class="row" style="margin-top:16px;justify-content:flex-end"><button class="btn" data-act="studio-cancel">Annulla</button><button class="btn primary" data-act="studio-save">${ic('check', 18)} Salva</button></div>`;
 }
 function renderSettings(main) {
@@ -1361,7 +1383,7 @@ async function restoreFlow(file) {
 async function onClick(e) {
   const t = e.target.closest('button,[data-pid],[data-sid]'); if (!t || S.locked) return;
   const d = t.dataset;
-  if (d.nav) { flushPending(); S.ui.view = d.nav; S.ui.editStudio = false; S.ui.editDoc = false; render(); return; }
+  if (d.nav) { flushPending(); if (S.ui.logoBefore !== undefined) { S.settings.useLogo = S.ui.logoBefore; S.ui.logoBefore = undefined; } S.ui.view = d.nav; S.ui.editStudio = false; S.ui.editDoc = false; render(); return; }
   if (d.pid) { flushPending(); S.ui.patientId = d.pid; if (!['sedute', 'anagrafica', 'anamnesi', 'consenso'].includes(S.ui.tab)) S.ui.tab = 'sedute'; $$('.pitem').forEach((x) => x.classList.toggle('on', x.dataset.pid === d.pid)); renderDetail(); $('#detail').scrollTop = 0; return; }
   if (d.sid) { openSession(d.sid); return; }
   if (d.tab) { flushPending(); S.ui.tab = d.tab; renderDetail(); return; }
@@ -1443,11 +1465,15 @@ async function onClick(e) {
       break;
     }
     case 'studio-edit': S.ui.editStudio = true; render(); $('[data-studio="studioNome"]')?.focus(); break;
-    case 'studio-cancel': S.ui.editStudio = false; render(); break;
+    case 'studio-cancel': S.ui.editStudio = false; if (S.ui.logoBefore !== undefined) { S.settings.useLogo = S.ui.logoBefore; S.ui.logoBefore = undefined; } render(); break;
+    case 'logo-toggle': {
+      if (S.ui.logoBefore === undefined) S.ui.logoBefore = S.settings.useLogo;
+      S.settings.useLogo = S.settings.useLogo === false; t.classList.toggle('on', S.settings.useLogo); break;
+    }
     case 'studio-save': {
       $$('[data-studio]').forEach((i) => (S.settings[i.dataset.studio] = i.value.trim()));
       await saveSettings();
-      S.ui.editStudio = false; render(); toast('Dati dello studio salvati');
+      S.ui.editStudio = false; S.ui.logoBefore = undefined; render(); toast('Dati dello studio salvati');
       break;
     }
     case 'doc-edit': S.ui.editDoc = true; render(); $('#docText')?.focus(); break;
